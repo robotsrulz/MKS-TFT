@@ -54,6 +54,8 @@ UART_HandleTypeDef huart3;
 
 osThreadId uiTaskHandle;
 
+TIM_HandleTypeDef htim2;
+
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 static osThreadId touchHandlerHandle;	// touch screen finger up/down
@@ -66,6 +68,7 @@ QueueHandle_t xEventQueue;
 void SystemClock_Config(void);
 void Error_Handler(void);
 static void MX_GPIO_Init(void);
+static void MX_TIM2_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI3_Init(void);
@@ -77,6 +80,8 @@ void StartUITask(void const * argument);
 /* Private function prototypes -----------------------------------------------*/
 void StartTouchHandlerTask(void const * argument);
 void StartSDHandlerTask(void const * argument);
+
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -101,6 +106,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_TIM2_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_SPI3_Init();
@@ -136,7 +142,7 @@ int main(void)
   osThreadDef(sdcardHandlerTask, StartSDHandlerTask, osPriorityNormal, 0, 128);
   sdcardHandlerHandle = osThreadCreate(osThread(sdcardHandlerTask), NULL);
 
-  osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 8 * 1024 / 4); // allocate 2k words (8 kb)
+  osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 14 * 1024 / 4);
   uiTaskHandle = osThreadCreate(osThread(uiTask), NULL);
   /* USER CODE END RTOS_THREADS */
 
@@ -250,7 +256,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; // was: 32
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -348,8 +354,8 @@ static void MX_GPIO_Init(void)
 						  |GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
 						  |GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
 
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOA, SPEAKER_Pin, GPIO_PIN_RESET);
+//	/*Configure GPIO pin Output Level */
+//	HAL_GPIO_WritePin(GPIOA, SPEAKER_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(GPIOB, LCD_nWR_Pin|FLASH_nCS_Pin, GPIO_PIN_RESET);
@@ -372,11 +378,11 @@ static void MX_GPIO_Init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : SPEAKER_Pin TOUCH_nCS_Pin */
-	GPIO_InitStruct.Pin = SPEAKER_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//	/*Configure GPIO pins : SPEAKER_Pin */
+//	GPIO_InitStruct.Pin = SPEAKER_Pin;
+//	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+//	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	/*Configure GPIO pin : TOUCH_DI_Pin */
 	GPIO_InitStruct.Pin = TOUCH_DI_Pin;
@@ -432,6 +438,49 @@ static void MX_GPIO_Init(void)
 
 	HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);	// touch irq
 	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+}
+
+/* TIM2 init function */
+static void MX_TIM2_Init(void)
+{
+	TIM_ClockConfigTypeDef sClockSourceConfig;
+	TIM_MasterConfigTypeDef sMasterConfig;
+	TIM_OC_InitTypeDef sConfigOC;
+
+	htim2.Instance = TIM2;
+	htim2.Init.Prescaler = 0;
+	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim2.Init.Period = 7199;
+	htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	if (HAL_TIM_Base_Init(&htim2) != HAL_OK) {
+		Error_Handler();
+	}
+
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK) {
+		Error_Handler();
+	}
+
+	if (HAL_TIM_OC_Init(&htim2) != HAL_OK) {
+		Error_Handler();
+	}
+
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_OC3REF;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig)
+			!= HAL_OK) {
+		Error_Handler();
+	}
+
+	sConfigOC.OCMode = TIM_OCMODE_TOGGLE;
+	sConfigOC.Pulse = 1;
+	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	if (HAL_TIM_OC_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK) {
+		Error_Handler();
+	}
+
+	HAL_TIM_MspPostInit(&htim2);
 }
 
 /* USER CODE BEGIN 4 */
@@ -566,9 +615,14 @@ void StartUITask(void const * argument) {
 
 	/* USER CODE BEGIN 5 */
 
+//	HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_3);
+
 	xEvent_t event;
 	event.ucEventID = INIT_EVENT;
 	(*processEvent) (&event);
+
+	osDelay(200);
+//	HAL_TIM_OC_Stop(&htim2, TIM_CHANNEL_3);
 
 	/* Infinite loop */
 	for (;;) {

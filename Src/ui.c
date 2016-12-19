@@ -67,8 +67,9 @@ static void uiMediaStateChange(uint16_t event);
 static void uiRedrawFileList(int raw_x, int raw_y);
 static void uiDrawProgressBar(uint32_t scale, uint16_t color);
 static void uiUpdateProgressBar(uint32_t progress);
+static void uiDrawIcon(const TCHAR *path, uint16_t x, uint16_t y);
 
-static const char *iconsTga[] = {
+static const char *iconsTga[97] = {
 		"about.tga", "Add.tga", "adj.tga",
 		"baud115200.tga", "baud115200_sel.tga", "baud250000.tga",
 		"baud250000_sel.tga", "baud57600.tga", "baud57600_sel.tga",
@@ -102,8 +103,6 @@ static const char *iconsTga[] = {
 
 void uiInitialize (xEvent_t *pxEvent) {
 
-	FIL *pTestFile;	// remove later
-
 	switch (pxEvent->ucEventID) {
 	case INIT_EVENT:
 
@@ -120,31 +119,39 @@ void uiInitialize (xEvent_t *pxEvent) {
 
 		f_mount(&sdFileSystem, SPISD_Path, 1);	// mount sd card, mount usb later
 
+#if 0
+		if ( flashFileSystem.fs_type) {
+
+			f_mkdir("0:/images");
+
+			for (int i=0; i<97; i++) {
+
+				char src[40];
+				char dst[40];
+
+				snprintf(src, sizeof(src), "1:/Tga_Images/%s", iconsTga[i]);
+				snprintf(dst, sizeof(dst), PATH "%s", iconsTga[i]);
+				transferFile(src, dst, 0);
+			}
+		}
+#endif
+
 		Lcd_Init(LCD_LANDSCAPE_CL);
 		Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0));
 
-		// eye candy, remove later
+#define PATH	"1:/Tga_Images/"
 
-		if ((pTestFile = pvPortMalloc(sizeof(FIL))) != NULL) {
-			if (sdFileSystem.fs_type
-					&& f_open(pTestFile, (TCHAR *) "1:/rainbow.tga", FA_READ) == FR_OK) {
+		uiDrawIcon(PATH "PreHeat.tga", 0, 16);
+		uiDrawIcon(PATH "mov.tga", 78, 16);
+		uiDrawIcon(PATH "Home.tga", 78 * 2, 16);
+		uiDrawIcon(PATH "Print.tga", 78 * 3, 16);
 
-				unsigned short height = 20, width;
-				if (!read_tga_direct(pTestFile, 120, 130, &width, &height)) {
-					// success
-				}
+		uiDrawIcon(PATH "extruct.tga", 0, 16 + 104);
+		uiDrawIcon(PATH "Fan.tga", 78, 16 + 104);
+		uiDrawIcon(PATH "Set.tga", 78 * 2, 16 + 104);
+		uiDrawIcon(PATH "More.tga", 78 * 3, 16 + 104);
 
-				f_close(pTestFile);
-			}
-			vPortFree(pTestFile);
-		}
-
-		Lcd_Put_Text(50, 50 + 0, 16, "      Hacked MKS TFT32", 0xffffu);
-		Lcd_Put_Text(50, 50 + 16, 16, "     by rstepanov, 2016", 0xffffu);
-		Lcd_Put_Text(50, 50 + 32, 16, "----------------------------", 0xffffu);
-		Lcd_Put_Text(50, 50 + 48, 16, "   Hello, Hackaday.io! (-:", 0xffffu);
-
-		// end of eye candy
+		Lcd_Put_Text(0, 0, 16, "NotReadyPrint", 0xffffu);
 		break;
 
 	case TOUCH_DOWN_EVENT:
@@ -187,7 +194,7 @@ void uiFileBrowse(xEvent_t *pxEvent) {
 		break;
 
 	case INIT_EVENT:
-		sprintf(cwd, "2:/");
+		sprintf(cwd, "0:/");
 		uiRedrawFileList(-1, -1);
 		break;
 
@@ -348,6 +355,10 @@ static void uiMediaStateChange(uint16_t event) {
 
 	case SDCARD_REMOVE:
 		f_mount(NULL, SPISD_Path, 1);
+		{
+			BYTE poweroff = 0;
+			(*SPISD_Driver.disk_ioctl)(0, CTRL_POWER, &poweroff);
+		}
 		break;
 
 	case USBDRIVE_INSERT:
@@ -366,6 +377,24 @@ static void uiDrawProgressBar(uint32_t scale, uint16_t color) {
 
 static void uiUpdateProgressBar(uint32_t progress) {
 
+}
+
+static void uiDrawIcon(const TCHAR *path, uint16_t x, uint16_t y) {
+
+	FIL *pIconFile;	// remove later
+
+	if ((pIconFile = pvPortMalloc(sizeof(FIL))) != NULL) {
+		if (f_open(pIconFile, path, FA_READ) == FR_OK) {
+
+			unsigned short height = 20, width;
+			if (!read_tga_direct(pIconFile, x, y, &width, &height)) {
+				// success
+			}
+
+			f_close(pIconFile);
+		}
+		vPortFree(pIconFile);
+	}
 }
 
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/

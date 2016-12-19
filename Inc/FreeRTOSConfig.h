@@ -100,7 +100,7 @@
 #define configTICK_RATE_HZ				( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES			( 7 )
 #define configMINIMAL_STACK_SIZE		( ( unsigned short ) 128 )
-#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 32 * 1024 ) )
+#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 40 * 1024 ) )
 #define configMAX_TASK_NAME_LEN			( 16 )
 #define configUSE_TRACE_FACILITY		1
 #define configUSE_16_BIT_TICKS			0
@@ -110,7 +110,7 @@
 #define configGENERATE_RUN_TIME_STATS	0
 #define configCHECK_FOR_STACK_OVERFLOW	2
 #define configUSE_RECURSIVE_MUTEXES		0
-#define configUSE_MALLOC_FAILED_HOOK	1
+#define configUSE_MALLOC_FAILED_HOOK	0
 #define configUSE_APPLICATION_TASK_TAG	0
 #define configUSE_COUNTING_SEMAPHORES	1
 
@@ -133,8 +133,6 @@ to exclude the API function. */
 #define INCLUDE_vTaskSuspend			1
 #define INCLUDE_vTaskDelayUntil			1
 #define INCLUDE_vTaskDelay				1
-
-#define INCLUDE_uxTaskGetStackHighWaterMark 1
 
 /* Use the system definition, if there is one */
 #ifdef __NVIC_PRIO_BITS
