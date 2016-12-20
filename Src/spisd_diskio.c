@@ -111,8 +111,7 @@ static BYTE rcvr_spi(void)
 	return Data;
 }
 
-static
-void rcvr_spi_m(BYTE *dst) {
+static void rcvr_spi_m(BYTE *dst) {
 	*dst = rcvr_spi();
 }
 
@@ -142,8 +141,7 @@ static BYTE wait_ready(void) {
 /* When the target system does not support socket power control, there   */
 /* is nothing to do in these functions and chk_power always returns 1.   */
 
-static
-void power_on(void) {
+static void power_on(void) {
 	unsigned char i, cmd_arg[6];
 	unsigned int Count = 0x1FFF;
 
@@ -173,13 +171,11 @@ void power_on(void) {
 	PowerFlag = 1;
 }
 
-static
-void power_off(void) {
+static void power_off(void) {
 	PowerFlag = 0;
 }
 
-static
-int chk_power(void) /* Socket power state: 0=off, 1=on */
+static int chk_power(void) /* Socket power state: 0=off, 1=on */
 {
 	return PowerFlag;
 }
@@ -190,9 +186,8 @@ int chk_power(void) /* Socket power state: 0=off, 1=on */
 
 #if _USE_WRITE == 1
 
-static uint8_t xmit_datablock(const BYTE *buff, /* 512 byte data block to be transmitted */
-BYTE token /* Data/Stop token */
-) {
+static uint8_t xmit_datablock(const BYTE *buff, BYTE token) {
+
 	BYTE resp = 0, wc;
 	uint32_t i = 0;
 
@@ -230,9 +225,8 @@ BYTE token /* Data/Stop token */
 /* Receive a data packet from MMC                                        */
 /*-----------------------------------------------------------------------*/
 
-static uint8_t rcvr_datablock(BYTE *buff, /* Data buffer to store received data */
-UINT btr /* Byte count (must be even number) */
-) {
+static uint8_t rcvr_datablock(BYTE *buff, UINT btr) {
+
 	BYTE token;
 	BYTE timer = 100;
 	do { /* Wait for data packet in timeout of 100ms */

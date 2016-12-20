@@ -120,7 +120,7 @@ void Lcd_Init(uint8_t orientation) {
 
 	uint16_t R01h, R03h, R60h;
 
-	lcd_orientation = orientation % 4;
+	lcd_orientation = orientation & 7;
 
 	// turn on backlight
 	HAL_GPIO_WritePin(LCD_BACKLIGHT_GPIO_Port, LCD_BACKLIGHT_Pin, GPIO_PIN_SET);

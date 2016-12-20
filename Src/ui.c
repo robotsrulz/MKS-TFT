@@ -68,33 +68,34 @@ static void uiRedrawFileList(int raw_x, int raw_y);
 static void uiDrawProgressBar(uint32_t scale, uint16_t color);
 static void uiUpdateProgressBar(uint32_t progress);
 static void uiDrawIcon(const TCHAR *path, uint16_t x, uint16_t y);
+static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t resetWindow);
 
 static const char *iconsTga[97] = {
-		"about.tga", "Add.tga", "adj.tga",
-		"baud115200.tga", "baud115200_sel.tga", "baud250000.tga",
-		"baud250000_sel.tga", "baud57600.tga", "baud57600_sel.tga",
-		"baud9600.tga", "baud9600_sel.tga", "bed.tga", "bed_no_words.tga",
-		"bmp_auto_off.tga", "bmp_manual_off.tga", "Close.tga",
-		"connect.tga", "custom1.tga", "custom2.tga", "custom3.tga",
-		"custom4.tga", "custom5.tga", "custom6.tga", "custom7.tga",
-		"Dec.tga", "delta.tga", "delta_sel.tga", "dir.tga", "en.tga",
-		"en_sel.tga", "extru1_no_word.tga", "extru2_no_word.tga",
-		"extruct.tga", "extruct_sel.tga", "Extrusor1.tga", "Extrusor2.tga",
-		"Fan.tga", "Fan_move.tga", "Fan_no_words.tga", "file.tga",
-		"fileSys.tga", "Home.tga", "In.tga", "lang.tga", "machine.tga",
-		"More.tga", "MotorOff.tga", "mov.tga", "mov_sel.tga", "norm.tga",
-		"norm_sel.tga", "Option.tga", "Out.tga", "pageDown.tga",
-		"pageUp.tga", "pause.tga", "PreHeat.tga", "Print.tga",
-		"resume.tga", "Return.tga", "sd.tga", "sd_sel.tga", "Set.tga",
-		"simple.tga", "simple_sel.tga", "speed.tga", "speed0.tga",
-		"speed127.tga", "speed255.tga", "Speed_high.tga",
-		"Speed_normal.tga", "Speed_slow.tga", "Splash.tga",
-		"Step10_degree.tga", "Step10_mm.tga", "Step1_degree.tga",
-		"Step1_mm.tga", "Step5_degree.tga", "Step5_mm.tga",
-		"Step_move0_1.tga", "Step_move1.tga", "Step_move10.tga", "stop.tga",
-		"temp.tga", "usb.tga", "usb_sel.tga", "wifi.tga", "xAdd.tga",
-		"xDec.tga", "yAdd.tga", "yDec.tga", "zAdd.tga", "zDec.tga",
-		"zeroA.tga", "zeroX.tga", "zeroY.tga", "zeroZ.tga"
+		"about.bin", "Add.bin", "adj.bin",
+		"baud115200.bin", "baud115200_sel.bin", "baud250000.bin",
+		"baud250000_sel.bin", "baud57600.bin", "baud57600_sel.bin",
+		"baud9600.bin", "baud9600_sel.bin", "bed.bin", "bed_no_words.bin",
+		"bmp_auto_off.bin", "bmp_manual_off.bin", "Close.bin",
+		"connect.bin", "custom1.bin", "custom2.bin", "custom3.bin",
+		"custom4.bin", "custom5.bin", "custom6.bin", "custom7.bin",
+		"Dec.bin", "delta.bin", "delta_sel.bin", "dir.bin", "en.bin",
+		"en_sel.bin", "extru1_no_word.bin", "extru2_no_word.bin",
+		"extruct.bin", "extruct_sel.bin", "Extrusor1.bin", "Extrusor2.bin",
+		"Fan.bin", "Fan_move.bin", "Fan_no_words.bin", "file.bin",
+		"fileSys.bin", "Home.bin", "In.bin", "lang.bin", "machine.bin",
+		"More.bin", "MotorOff.bin", "mov.bin", "mov_sel.bin", "norm.bin",
+		"norm_sel.bin", "Option.bin", "Out.bin", "pageDown.bin",
+		"pageUp.bin", "pause.bin", "PreHeat.bin", "Print.bin",
+		"resume.bin", "Return.bin", "sd.bin", "sd_sel.bin", "Set.bin",
+		"simple.bin", "simple_sel.bin", "speed.bin", "speed0.bin",
+		"speed127.bin", "speed255.bin", "Speed_high.bin",
+		"Speed_normal.bin", "Speed_slow.bin", "Splash.bin",
+		"Step10_degree.bin", "Step10_mm.bin", "Step1_degree.bin",
+		"Step1_mm.bin", "Step5_degree.bin", "Step5_mm.bin",
+		"Step_move0_1.bin", "Step_move1.bin", "Step_move10.bin", "stop.bin",
+		"temp.bin", "usb.bin", "usb_sel.bin", "wifi.bin", "xAdd.bin",
+		"xDec.bin", "yAdd.bin", "yDec.bin", "zAdd.bin", "zDec.bin",
+		"zeroA.bin", "zeroX.bin", "zeroY.bin", "zeroZ.bin"
 };
 
 /*
@@ -137,19 +138,21 @@ void uiInitialize (xEvent_t *pxEvent) {
 #endif
 
 		Lcd_Init(LCD_LANDSCAPE_CL);
-		Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0));
+		Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0)); // gray
 
-#define PATH	"1:/Tga_Images/"
+#define PATH	"1:/mks_pic/bmp_"
 
-		uiDrawIcon(PATH "PreHeat.tga", 0, 16);
-		uiDrawIcon(PATH "mov.tga", 78, 16);
-		uiDrawIcon(PATH "Home.tga", 78 * 2, 16);
-		uiDrawIcon(PATH "Print.tga", 78 * 3, 16);
+//		uiDrawBinIcon(PATH "logo.bin", 0, 0, 320, 240, 1);
 
-		uiDrawIcon(PATH "extruct.tga", 0, 16 + 104);
-		uiDrawIcon(PATH "Fan.tga", 78, 16 + 104);
-		uiDrawIcon(PATH "Set.tga", 78 * 2, 16 + 104);
-		uiDrawIcon(PATH "More.tga", 78 * 3, 16 + 104);
+		uiDrawBinIcon(PATH "preHeat.bin", 0, 16, 78, 104, 1);
+		uiDrawBinIcon(PATH "mov.bin", 78, 16, 78, 104, 0);
+		uiDrawBinIcon(PATH "machine.bin", 78 * 2, 16, 78, 104, 0);
+		uiDrawBinIcon(PATH "printing.bin", 78 * 3, 16, 78, 104, 0);
+
+		uiDrawBinIcon(PATH "extruct.bin", 0, 16 + 104, 78, 104, 0);
+		uiDrawBinIcon(PATH "fan.bin", 78, 16 + 104, 78, 104, 0);
+		uiDrawBinIcon(PATH "set.bin", 78 * 2, 16 + 104, 78, 104, 0);
+		uiDrawBinIcon(PATH "More.bin", 78 * 3, 16 + 104, 78, 104, 1);
 
 		Lcd_Put_Text(0, 0, 16, "NotReadyPrint", 0xffffu);
 		break;
@@ -381,7 +384,7 @@ static void uiUpdateProgressBar(uint32_t progress) {
 
 static void uiDrawIcon(const TCHAR *path, uint16_t x, uint16_t y) {
 
-	FIL *pIconFile;	// remove later
+	FIL *pIconFile;
 
 	if ((pIconFile = pvPortMalloc(sizeof(FIL))) != NULL) {
 		if (f_open(pIconFile, path, FA_READ) == FR_OK) {
@@ -396,5 +399,59 @@ static void uiDrawIcon(const TCHAR *path, uint16_t x, uint16_t y) {
 		vPortFree(pIconFile);
 	}
 }
+
+static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t resetWindow) {
+
+	FIL *pIconFile = NULL;
+	BYTE *pBuffer = NULL;
+
+	Lcd_Com_Data ((Lcd_Orientation() & 1) ? 0x0052 : 0x0050, x);
+	Lcd_Com_Data ((Lcd_Orientation() & 1) ? 0x0050 : 0x0052, y);
+	Lcd_Com_Data ((Lcd_Orientation() & 1) ? 0x0053 : 0x0051, x + width - 1);
+	Lcd_Com_Data ((Lcd_Orientation() & 1) ? 0x0051 : 0x0053, y + height - 1);
+
+	if ((pIconFile = pvPortMalloc(sizeof(FIL))) != NULL
+			&& (pBuffer = pvPortMalloc(_MIN_SS)) != NULL) {
+
+		if (f_open(pIconFile, path, FA_READ) == FR_OK) {
+
+			FRESULT res = FR_OK;
+			size_t bytes = (size_t) -1;
+
+			Lcd_Go_XY(x, y);
+			Lcd_Com (0x0022);
+
+			HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(LCD_nRD_GPIO_Port, LCD_nRD_Pin, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(LCD_RS_GPIO_Port,  LCD_RS_Pin,  GPIO_PIN_SET);
+
+			do {
+				res = f_read(pIconFile, pBuffer, _MIN_SS, &bytes);
+				if (bytes) {
+
+					for (size_t i=0; i<bytes; i+=2) {
+
+						GPIOE->ODR = *(uint16_t *)&pBuffer[i];
+					    GPIOB->BSRR = (uint32_t)LCD_nWR_Pin << 16;
+						GPIOB->BSRR = LCD_nWR_Pin;
+					}
+				}
+			} while (bytes);
+
+			f_close(pIconFile);
+		}
+	}
+
+	if (pIconFile) vPortFree(pIconFile);
+	if (pBuffer) vPortFree(pBuffer);
+
+	if (resetWindow) {
+		Lcd_Com_Data(0x0050, 0x0000);		  // Window Horizontal RAM Address Start (R50h)
+		Lcd_Com_Data(0x0051, 239);			  // Window Horizontal RAM Address End (R51h)
+		Lcd_Com_Data(0x0052, 0x0000);		  // Window Vertical RAM Address Start (R52h)
+		Lcd_Com_Data(0x0053, 319);			  // Window Vertical RAM Address End (R53h)
+	}
+}
+
 
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/
