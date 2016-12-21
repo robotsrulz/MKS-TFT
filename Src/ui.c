@@ -146,7 +146,7 @@ void uiInitialize (xEvent_t *pxEvent) {
 
 		uiDrawBinIcon(PATH "preHeat.bin", 0, 16, 78, 104, 1);
 		uiDrawBinIcon(PATH "mov.bin", 78, 16, 78, 104, 0);
-		uiDrawBinIcon(PATH "machine.bin", 78 * 2, 16, 78, 104, 0);
+		uiDrawBinIcon(PATH "zero.bin", 78 * 2, 16, 78, 104, 0);
 		uiDrawBinIcon(PATH "printing.bin", 78 * 3, 16, 78, 104, 0);
 
 		uiDrawBinIcon(PATH "extruct.bin", 0, 16 + 104, 78, 104, 0);

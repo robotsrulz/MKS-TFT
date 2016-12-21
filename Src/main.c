@@ -354,9 +354,6 @@ static void MX_GPIO_Init(void)
 						  |GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
 						  |GPIO_PIN_14|GPIO_PIN_15|GPIO_PIN_0|GPIO_PIN_1, GPIO_PIN_RESET);
 
-//	/*Configure GPIO pin Output Level */
-//	HAL_GPIO_WritePin(GPIOA, SPEAKER_Pin, GPIO_PIN_RESET);
-
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(GPIOB, LCD_nWR_Pin|FLASH_nCS_Pin, GPIO_PIN_RESET);
 
@@ -377,12 +374,6 @@ static void MX_GPIO_Init(void)
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-//	/*Configure GPIO pins : SPEAKER_Pin */
-//	GPIO_InitStruct.Pin = SPEAKER_Pin;
-//	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-//	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	/*Configure GPIO pin : TOUCH_DI_Pin */
 	GPIO_InitStruct.Pin = TOUCH_DI_Pin;
@@ -514,6 +505,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void StartTouchHandlerTask(void const * argument) {
 
+	uint8_t pTxData[3] = { 0xd4, 0, 0 };
+	uint8_t pRxData[3];
+
+	/* warmup */
+	HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
+	pTxData[0] = 0x94;
+	HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
+
 	while (1) {
 
 		if(xSemaphoreTake(xTouchSemaphore, portMAX_DELAY ) == pdTRUE ) {
@@ -528,8 +527,6 @@ void StartTouchHandlerTask(void const * argument) {
 				 *	http://e2e.ti.com/support/other_analog/touch/f/750/t/202636
 				 * */
 
-				uint8_t pTxData[3] = { 0, 0, 0 };
-				uint8_t pRxData[3];
 				uint16_t x[3], y[3], i;
 
 				HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_RESET);
@@ -615,14 +612,14 @@ void StartUITask(void const * argument) {
 
 	/* USER CODE BEGIN 5 */
 
-//	HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_3);
+	HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
+	osDelay(200);
+	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
 
 	xEvent_t event;
 	event.ucEventID = INIT_EVENT;
 	(*processEvent) (&event);
 
-	osDelay(200);
-//	HAL_TIM_OC_Stop(&htim2, TIM_CHANNEL_3);
 
 	/* Infinite loop */
 	for (;;) {
