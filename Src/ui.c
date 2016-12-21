@@ -153,15 +153,15 @@ void uiInitialize (xEvent_t *pxEvent) {
 			f_rename(MKS_PIC_SD, MKS_PIC_SD ".old");
 		}
 
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_preHeat.bin", 0, 16, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_mov.bin", 78, 16, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_zero.bin", 78 * 2, 16, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_printing.bin", 78 * 3, 16, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_preHeat.bin",	1, 16, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_mov.bin",	   81, 16, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_zero.bin",	  161, 16, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_printing.bin", 241, 16, 78, 104, 0);
 
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_extruct.bin", 0, 16 + 104, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_fan.bin", 78, 16 + 104, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_set.bin", 78 * 2, 16 + 104, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_More.bin", 78 * 3, 16 + 104, 78, 104, 1);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_extruct.bin",	1, 18 + 104, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_fan.bin",	   81, 18 + 104, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_set.bin",	  161, 18 + 104, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_More.bin",	  241, 18 + 104, 78, 104, 1);
 
 		Lcd_Put_Text(0, 0, 16, "NotReadyPrint", 0xffffu);
 		break;
