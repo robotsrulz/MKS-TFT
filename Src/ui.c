@@ -42,6 +42,8 @@ static FATFS flashFileSystem;	// 0:/
 static FATFS sdFileSystem;		// 1:/
 static FATFS usbFileSystem;		// 2:/
 
+extern TIM_HandleTypeDef htim2;
+
 #define MKS_PIC_SD	"1:/mks_pic"
 #define MKS_PIC_FL	"0:/mks_pic"
 
@@ -70,6 +72,7 @@ static void uiDrawProgressBar(uint32_t scale, uint16_t color);
 static void uiUpdateProgressBar(uint32_t progress);
 static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y,
 		uint16_t width, uint16_t height, uint8_t resetWindow);
+static void uiShortBeep();
 
 /*
  * user callback definition
@@ -78,6 +81,7 @@ static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y,
 void uiInitialize (xEvent_t *pxEvent) {
 
 	DIR dir;
+	uint16_t x, y;
 
 	switch (pxEvent->ucEventID) {
 	case INIT_EVENT:
@@ -120,6 +124,8 @@ void uiInitialize (xEvent_t *pxEvent) {
 
 					Lcd_Put_Text(56, 80, 16, "Copying files to FLASH...", Lcd_Get_RGB565(0, 63, 0));
 					uiDrawProgressBar(count, Lcd_Get_RGB565(0, 63, 0));
+
+					// TODO: format flash again?
 
 					count = 0;
 					res = FR_OK;
@@ -167,9 +173,16 @@ void uiInitialize (xEvent_t *pxEvent) {
 		break;
 
 	case TOUCH_DOWN_EVENT:
-		processEvent = uiFileBrowse;
-		pxEvent->ucEventID = INIT_EVENT;
-		xQueueSendToBack(xEventQueue, pxEvent, 1000);
+
+		uiShortBeep();
+		Lcd_Translate_Touch_Pos((pxEvent->ucData.touchXY) >> 16 & 0x7fffu,
+				pxEvent->ucData.touchXY & 0x7fffu, &x, &y);
+
+		if (x > 240 && y < (16 + 104) && y > 16) {
+			processEvent = uiFileBrowse;
+			pxEvent->ucEventID = INIT_EVENT;
+			xQueueSendToBack(xEventQueue, pxEvent, 1000);
+		}
 		break;
 
 	case SDCARD_INSERT:
@@ -193,6 +206,8 @@ void uiFileBrowse(xEvent_t *pxEvent) {
 
 	switch (pxEvent->ucEventID) {
 	case TOUCH_DOWN_EVENT:
+		uiShortBeep();
+
 		uiRedrawFileList((pxEvent->ucData.touchXY) >> 16 & 0x7fffu,
 				pxEvent->ucData.touchXY & 0x7fffu);
 		break;
@@ -206,7 +221,7 @@ void uiFileBrowse(xEvent_t *pxEvent) {
 		break;
 
 	case INIT_EVENT:
-		sprintf(cwd, "0:/");
+		sprintf(cwd, "1:/");
 		uiRedrawFileList(-1, -1);
 		break;
 
@@ -460,5 +475,11 @@ static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y, uint16_t wi
 	}
 }
 
+static void uiShortBeep() {
+
+	HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
+	osDelay(100);
+	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
+}
 
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/
