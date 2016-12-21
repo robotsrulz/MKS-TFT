@@ -35,7 +35,6 @@
 
 #include "ui.h"
 #include "lcd.h"
-#include "tga.h"
 #include "fatfs.h"
 #include "eeprom.h"
 
@@ -43,6 +42,8 @@ static FATFS flashFileSystem;	// 0:/
 static FATFS sdFileSystem;		// 1:/
 static FATFS usbFileSystem;		// 2:/
 
+#define MKS_PIC_SD	"1:/mks_pic"
+#define MKS_PIC_FL	"0:/mks_pic"
 
 /*
  * profiling stuff here
@@ -67,36 +68,8 @@ static void uiMediaStateChange(uint16_t event);
 static void uiRedrawFileList(int raw_x, int raw_y);
 static void uiDrawProgressBar(uint32_t scale, uint16_t color);
 static void uiUpdateProgressBar(uint32_t progress);
-static void uiDrawIcon(const TCHAR *path, uint16_t x, uint16_t y);
-static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t resetWindow);
-
-static const char *iconsTga[97] = {
-		"about.bin", "Add.bin", "adj.bin",
-		"baud115200.bin", "baud115200_sel.bin", "baud250000.bin",
-		"baud250000_sel.bin", "baud57600.bin", "baud57600_sel.bin",
-		"baud9600.bin", "baud9600_sel.bin", "bed.bin", "bed_no_words.bin",
-		"bmp_auto_off.bin", "bmp_manual_off.bin", "Close.bin",
-		"connect.bin", "custom1.bin", "custom2.bin", "custom3.bin",
-		"custom4.bin", "custom5.bin", "custom6.bin", "custom7.bin",
-		"Dec.bin", "delta.bin", "delta_sel.bin", "dir.bin", "en.bin",
-		"en_sel.bin", "extru1_no_word.bin", "extru2_no_word.bin",
-		"extruct.bin", "extruct_sel.bin", "Extrusor1.bin", "Extrusor2.bin",
-		"Fan.bin", "Fan_move.bin", "Fan_no_words.bin", "file.bin",
-		"fileSys.bin", "Home.bin", "In.bin", "lang.bin", "machine.bin",
-		"More.bin", "MotorOff.bin", "mov.bin", "mov_sel.bin", "norm.bin",
-		"norm_sel.bin", "Option.bin", "Out.bin", "pageDown.bin",
-		"pageUp.bin", "pause.bin", "PreHeat.bin", "Print.bin",
-		"resume.bin", "Return.bin", "sd.bin", "sd_sel.bin", "Set.bin",
-		"simple.bin", "simple_sel.bin", "speed.bin", "speed0.bin",
-		"speed127.bin", "speed255.bin", "Speed_high.bin",
-		"Speed_normal.bin", "Speed_slow.bin", "Splash.bin",
-		"Step10_degree.bin", "Step10_mm.bin", "Step1_degree.bin",
-		"Step1_mm.bin", "Step5_degree.bin", "Step5_mm.bin",
-		"Step_move0_1.bin", "Step_move1.bin", "Step_move10.bin", "stop.bin",
-		"temp.bin", "usb.bin", "usb_sel.bin", "wifi.bin", "xAdd.bin",
-		"xDec.bin", "yAdd.bin", "yDec.bin", "zAdd.bin", "zDec.bin",
-		"zeroA.bin", "zeroX.bin", "zeroY.bin", "zeroZ.bin"
-};
+static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y,
+		uint16_t width, uint16_t height, uint8_t resetWindow);
 
 /*
  * user callback definition
@@ -104,8 +77,13 @@ static const char *iconsTga[97] = {
 
 void uiInitialize (xEvent_t *pxEvent) {
 
+	DIR dir;
+
 	switch (pxEvent->ucEventID) {
 	case INIT_EVENT:
+
+		Lcd_Init(LCD_LANDSCAPE_CL);
+		Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0));
 
 		// mount internal flash, format if needed
 		if (FR_NO_FILESYSTEM == f_mount(&flashFileSystem, SPIFL_Path, 1)) {
@@ -115,44 +93,75 @@ void uiInitialize (xEvent_t *pxEvent) {
 
 				f_mkfs ("0:", FM_ANY, 0, work, _MAX_SS);	/* Create a FAT volume */
 				vPortFree(work);
+
+				f_mount(&flashFileSystem, SPIFL_Path, 1);
 			}
 		}
 
 		f_mount(&sdFileSystem, SPISD_Path, 1);	// mount sd card, mount usb later
 
-#if 0
-		if ( flashFileSystem.fs_type) {
+		if (flashFileSystem.fs_type && sdFileSystem.fs_type
+				&& FR_OK == f_opendir(&dir, MKS_PIC_SD)) {
 
-			f_mkdir("0:/images");
+			FRESULT res = FR_OK; /* Open the directory */
 
-			for (int i=0; i<97; i++) {
+			res = f_mkdir(MKS_PIC_FL);
+			if (res == FR_OK || res == FR_EXIST) {
 
-				char src[40];
-				char dst[40];
+				FILINFO fno;
+				size_t count = 0;
+				while (FR_OK == f_readdir(&dir, &fno) && fno.fname[0]) {
+					if (((fno.fattrib & AM_DIR) == 0) && strstr(fno.fname, ".bin"))
+						count++;
+				}
 
-				snprintf(src, sizeof(src), "1:/Tga_Images/%s", iconsTga[i]);
-				snprintf(dst, sizeof(dst), PATH "%s", iconsTga[i]);
-				transferFile(src, dst, 0);
+				f_rewinddir(&dir);
+				if (count) {
+
+					Lcd_Put_Text(56, 80, 16, "Copying files to FLASH...", Lcd_Get_RGB565(0, 63, 0));
+					uiDrawProgressBar(count, Lcd_Get_RGB565(0, 63, 0));
+
+					count = 0;
+					res = FR_OK;
+
+					while (FR_OK == f_readdir(&dir, &fno) && fno.fname[0]) {
+						if (((fno.fattrib & AM_DIR) == 0) && strstr(fno.fname, ".bin")) {
+
+							char src[50];
+							char dst[50];
+
+							Lcd_Fill_Rect(0, 232, 319, 240, 0);
+							snprintf(src, sizeof(src), "%02u", res);
+							Lcd_Put_Text(304, 232, 8, src,
+									res == FR_OK ? Lcd_Get_RGB565(0, 63, 0) : Lcd_Get_RGB565(31, 0, 0));
+
+							snprintf(src, sizeof(src), MKS_PIC_SD "/%s", fno.fname);
+							snprintf(dst, sizeof(dst), MKS_PIC_FL "/%s", fno.fname);
+
+							Lcd_Put_Text(0, 232, 8, src, Lcd_Get_RGB565(0, 63, 0));
+							res = transferFile(src, dst, 1);
+
+							uiUpdateProgressBar(++count);
+						}
+					}
+
+					Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0));
+				}
 			}
+
+			f_closedir(&dir);
+			f_rename(MKS_PIC_SD, MKS_PIC_SD ".old");
 		}
-#endif
 
-		Lcd_Init(LCD_LANDSCAPE_CL);
-		Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0)); // gray
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_preHeat.bin", 0, 16, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_mov.bin", 78, 16, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_zero.bin", 78 * 2, 16, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_printing.bin", 78 * 3, 16, 78, 104, 0);
 
-#define PATH	"1:/mks_pic/bmp_"
-
-//		uiDrawBinIcon(PATH "logo.bin", 0, 0, 320, 240, 1);
-
-		uiDrawBinIcon(PATH "preHeat.bin", 0, 16, 78, 104, 1);
-		uiDrawBinIcon(PATH "mov.bin", 78, 16, 78, 104, 0);
-		uiDrawBinIcon(PATH "zero.bin", 78 * 2, 16, 78, 104, 0);
-		uiDrawBinIcon(PATH "printing.bin", 78 * 3, 16, 78, 104, 0);
-
-		uiDrawBinIcon(PATH "extruct.bin", 0, 16 + 104, 78, 104, 0);
-		uiDrawBinIcon(PATH "fan.bin", 78, 16 + 104, 78, 104, 0);
-		uiDrawBinIcon(PATH "set.bin", 78 * 2, 16 + 104, 78, 104, 0);
-		uiDrawBinIcon(PATH "More.bin", 78 * 3, 16 + 104, 78, 104, 1);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_extruct.bin", 0, 16 + 104, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_fan.bin", 78, 16 + 104, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_set.bin", 78 * 2, 16 + 104, 78, 104, 0);
+		uiDrawBinIcon(MKS_PIC_FL "/bmp_More.bin", 78 * 3, 16 + 104, 78, 104, 1);
 
 		Lcd_Put_Text(0, 0, 16, "NotReadyPrint", 0xffffu);
 		break;
@@ -374,29 +383,28 @@ static void uiMediaStateChange(uint16_t event) {
 	}
 }
 
+static uint32_t pBarScale = 0;
+static uint16_t pBarColor = 0xffffu;
+static uint32_t pBarProgress = 0;
+
 static void uiDrawProgressBar(uint32_t scale, uint16_t color) {
 
+	Lcd_Fill_Rect(10 - 2, 100 - 2, 310 + 2, 140 + 2, color);
+	Lcd_Fill_Rect(10 - 1, 100 - 1, 310 + 1, 140 + 1, 0);
+
+	pBarScale = scale;
+	pBarColor = color;
+	pBarProgress = 0;
 }
 
 static void uiUpdateProgressBar(uint32_t progress) {
 
-}
+	uint16_t x0 = 300 * pBarProgress / pBarScale;
+	pBarProgress = progress;
+	uint16_t x1 = 300 * pBarProgress / pBarScale;
 
-static void uiDrawIcon(const TCHAR *path, uint16_t x, uint16_t y) {
-
-	FIL *pIconFile;
-
-	if ((pIconFile = pvPortMalloc(sizeof(FIL))) != NULL) {
-		if (f_open(pIconFile, path, FA_READ) == FR_OK) {
-
-			unsigned short height = 20, width;
-			if (!read_tga_direct(pIconFile, x, y, &width, &height)) {
-				// success
-			}
-
-			f_close(pIconFile);
-		}
-		vPortFree(pIconFile);
+	if (x0 < x1) {
+		Lcd_Fill_Rect(10 + x0, 100, 10 + x1, 140, pBarColor);
 	}
 }
 
@@ -415,7 +423,6 @@ static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y, uint16_t wi
 
 		if (f_open(pIconFile, path, FA_READ) == FR_OK) {
 
-			FRESULT res = FR_OK;
 			size_t bytes = (size_t) -1;
 
 			Lcd_Go_XY(x, y);
@@ -426,7 +433,7 @@ static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y, uint16_t wi
 			HAL_GPIO_WritePin(LCD_RS_GPIO_Port,  LCD_RS_Pin,  GPIO_PIN_SET);
 
 			do {
-				res = f_read(pIconFile, pBuffer, _MIN_SS, &bytes);
+				f_read(pIconFile, pBuffer, _MIN_SS, &bytes);
 				if (bytes) {
 
 					for (size_t i=0; i<bytes; i+=2) {

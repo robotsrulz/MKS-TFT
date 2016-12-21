@@ -39,7 +39,6 @@
 /* USER CODE BEGIN Includes */
 #include "lcd.h"
 #include "ui.h"
-#include "tga.h"
 
 /* USER CODE END Includes */
 

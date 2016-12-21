@@ -64,7 +64,7 @@ FRESULT transferFile(const TCHAR *source, const TCHAR *dest, uint8_t overwrite) 
 
 	if (NULL != (pSourceFile = pvPortMalloc(sizeof(FIL))) &&
 			NULL != (pDestFile = pvPortMalloc(sizeof(FIL))) &&
-			NULL != (pBuffer = pvPortMalloc(_MAX_SS))) {
+			NULL != (pBuffer = pvPortMalloc(_MIN_SS))) {
 
 		if (FR_OK == (res = f_open(pSourceFile, source, FA_READ))) {
 			if (FR_OK == (res = f_open(pDestFile, dest,	FA_WRITE
@@ -73,7 +73,7 @@ FRESULT transferFile(const TCHAR *source, const TCHAR *dest, uint8_t overwrite) 
 				size_t bytes = (size_t) -1, wbytes;
 				do {
 					if (FR_OK
-							== (res = f_read(pSourceFile, pBuffer, _MAX_SS,
+							== (res = f_read(pSourceFile, pBuffer, _MIN_SS,
 									&bytes)) && bytes) {
 						res = f_write(pDestFile, pBuffer, bytes, &wbytes);
 					}
