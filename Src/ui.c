@@ -47,20 +47,22 @@ extern TIM_HandleTypeDef htim2;
 #define MKS_PIC_SD	"1:/mks_pic"
 #define MKS_PIC_FL	"0:/mks_pic"
 
-/*
- * profiling stuff here
- */
-
-UBaseType_t uxHighWaterMark;
+#define READY_PRINT	"MyFirmware"
 
 /*
  * user callback declaration
  */
 
 void uiInitialize (xEvent_t *pxEvent);
+void uiMainMenu   (xEvent_t *pxEvent);
+void uiHomeMenu   (xEvent_t *pxEvent);
+void uiMoveMenu   (xEvent_t *pxEvent);
+void uiMoveMenuStepChange (xEvent_t *pxEvent);
+void uiSetupMenu  (xEvent_t *pxEvent);
 void uiFileBrowse (xEvent_t *pxEvent);
 
-void (*volatile processEvent) (xEvent_t *pxEvent) = uiInitialize;
+typedef void (*volatile eventProcessor_t) (xEvent_t *);
+eventProcessor_t processEvent = uiInitialize;
 
 /*
  * service routines declaration
@@ -72,7 +74,93 @@ static void uiDrawProgressBar(uint32_t scale, uint16_t color);
 static void uiUpdateProgressBar(uint32_t progress);
 static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y,
 		uint16_t width, uint16_t height, uint8_t resetWindow);
-static void uiShortBeep();
+
+
+__STATIC_INLINE void uiNextState(void (*volatile next) (xEvent_t *pxEvent)) {
+	processEvent = next;
+	xEvent_t event = { INIT_EVENT };
+	xQueueSendToBack(xEventQueue, &event, 1000);
+}
+
+__STATIC_INLINE void uiShortBeep() {
+	HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
+	osDelay(50);
+	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
+}
+
+typedef struct {
+
+	const char				*pIconFile;
+	const eventProcessor_t	pEventProcessor;
+} xMenuItem_t;
+
+__STATIC_INLINE void uiDrawMenu(const xMenuItem_t *pMenu) {
+
+	if (pMenu) {
+		uiDrawBinIcon(pMenu[0].pIconFile,	1, 16, 78, 104, 0);
+		uiDrawBinIcon(pMenu[1].pIconFile,  81, 16, 78, 104, 0);
+		uiDrawBinIcon(pMenu[2].pIconFile, 161, 16, 78, 104, 0);
+		uiDrawBinIcon(pMenu[3].pIconFile, 241, 16, 78, 104, 0);
+
+		uiDrawBinIcon(pMenu[4].pIconFile,	1, 18 + 104, 78, 104, 0);
+		uiDrawBinIcon(pMenu[5].pIconFile,  81, 18 + 104, 78, 104, 0);
+		uiDrawBinIcon(pMenu[6].pIconFile, 161, 18 + 104, 78, 104, 0);
+		uiDrawBinIcon(pMenu[7].pIconFile, 241, 18 + 104, 78, 104, 1);
+	}
+}
+
+__STATIC_INLINE void uiMenuHandleEventDefault(const xMenuItem_t *pMenu, xEvent_t *pxEvent) {
+
+	if (pxEvent) {
+		switch (pxEvent->ucEventID) {
+		case SDCARD_INSERT:
+		case SDCARD_REMOVE:
+		case USBDRIVE_INSERT:
+		case USBDRIVE_REMOVE:
+			uiMediaStateChange(pxEvent->ucEventID);
+			break;
+
+		case INIT_EVENT:
+			if (pMenu) {
+				Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0));
+				uiDrawMenu(pMenu);
+			}
+			break;
+
+		case TOUCH_DOWN_EVENT:
+			if (pMenu) {
+
+				uint16_t x, y;
+				eventProcessor_t p = NULL;
+
+				Lcd_Translate_Touch_Pos((pxEvent->ucData.touchXY) >> 16 & 0x7fffu,
+						pxEvent->ucData.touchXY & 0x7fffu, &x, &y);
+
+				uiShortBeep();
+				if (y >= 16 && y <= 16 + 104) {
+					p = pMenu[(x - 1) / 80].pEventProcessor;
+
+				} else if (y >= 16 + 104 && y <= 16 + 104 + 80) {
+					p = pMenu[4 + (x - 1) / 80].pEventProcessor;
+				}
+				if (p) uiNextState(p);
+			}
+			break;
+
+		case UPDATE1_EVENT: uiDrawBinIcon(pMenu[0].pIconFile,	1, 16, 78, 104, 0); break;
+		case UPDATE2_EVENT: uiDrawBinIcon(pMenu[1].pIconFile,  81, 16, 78, 104, 0); break;
+		case UPDATE3_EVENT: uiDrawBinIcon(pMenu[2].pIconFile, 161, 16, 78, 104, 0); break;
+		case UPDATE4_EVENT: uiDrawBinIcon(pMenu[3].pIconFile, 241, 16, 78, 104, 0); break;
+		case UPDATE5_EVENT: uiDrawBinIcon(pMenu[4].pIconFile,	1, 18 + 104, 78, 104, 0); break;
+		case UPDATE6_EVENT: uiDrawBinIcon(pMenu[5].pIconFile,  81, 18 + 104, 78, 104, 0); break;
+		case UPDATE7_EVENT: uiDrawBinIcon(pMenu[6].pIconFile, 161, 18 + 104, 78, 104, 0); break;
+		case UPDATE8_EVENT: uiDrawBinIcon(pMenu[7].pIconFile, 241, 18 + 104, 78, 104, 1); break;
+
+		default:
+			break;
+		}
+	}
+}
 
 /*
  * user callback definition
@@ -80,11 +168,9 @@ static void uiShortBeep();
 
 void uiInitialize (xEvent_t *pxEvent) {
 
-	DIR dir;
-	uint16_t x, y;
+	if (INIT_EVENT == pxEvent->ucEventID) {
 
-	switch (pxEvent->ucEventID) {
-	case INIT_EVENT:
+		DIR dir;
 
 		Lcd_Init(LCD_LANDSCAPE_CL);
 		Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0));
@@ -159,42 +245,124 @@ void uiInitialize (xEvent_t *pxEvent) {
 			f_rename(MKS_PIC_SD, MKS_PIC_SD ".old");
 		}
 
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_preHeat.bin",	1, 16, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_mov.bin",	   81, 16, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_zero.bin",	  161, 16, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_printing.bin", 241, 16, 78, 104, 0);
+		uiNextState(uiMainMenu);
+	} else
+		uiMenuHandleEventDefault(NULL, pxEvent);
+}
 
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_extruct.bin",	1, 18 + 104, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_fan.bin",	   81, 18 + 104, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_set.bin",	  161, 18 + 104, 78, 104, 0);
-		uiDrawBinIcon(MKS_PIC_FL "/bmp_More.bin",	  241, 18 + 104, 78, 104, 1);
+void uiMainMenu (xEvent_t *pxEvent) {
 
-		Lcd_Put_Text(0, 0, 16, "NotReadyPrint", 0xffffu);
-		break;
+	static const xMenuItem_t mainMenu[8] = {
+			{ MKS_PIC_FL "/bmp_preHeat.bin", NULL },
+			{ MKS_PIC_FL "/bmp_mov.bin", uiMoveMenu },
+			{ MKS_PIC_FL "/bmp_zero.bin", uiHomeMenu },
+			{ MKS_PIC_FL "/bmp_printing.bin", uiFileBrowse },
+			{ MKS_PIC_FL "/bmp_extruct.bin", NULL },
+			{ MKS_PIC_FL "/bmp_fan.bin", NULL },
+			{ MKS_PIC_FL "/bmp_set.bin", uiSetupMenu },
+			{ MKS_PIC_FL "/bmp_More.bin", NULL }
+	};
 
-	case TOUCH_DOWN_EVENT:
+	uiMenuHandleEventDefault(mainMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT, 0xffffu);
+}
 
-		uiShortBeep();
-		Lcd_Translate_Touch_Pos((pxEvent->ucData.touchXY) >> 16 & 0x7fffu,
-				pxEvent->ucData.touchXY & 0x7fffu, &x, &y);
+void uiSetupMenu (xEvent_t *pxEvent) {
 
-		if (x > 240 && y < (16 + 104) && y > 16) {
-			processEvent = uiFileBrowse;
-			pxEvent->ucEventID = INIT_EVENT;
-			xQueueSendToBack(xEventQueue, pxEvent, 1000);
+	static const xMenuItem_t setupMenu[8] = {
+			{ MKS_PIC_FL "/bmp_fileSys.bin", NULL },
+			{ MKS_PIC_FL "/bmp_mov.bin", NULL },
+			{ MKS_PIC_FL "/bmp_wifi.bin", NULL },
+			{ MKS_PIC_FL "/bmp_connect.bin", NULL },
+			{ MKS_PIC_FL "/bmp_about.bin", NULL },
+			{ MKS_PIC_FL "/bmp_fan.bin", NULL },
+			{ MKS_PIC_FL "/bmp_manual_off.bin", NULL },
+			{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
+	};
+
+	uiMenuHandleEventDefault(setupMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Set", 0xffffu);
+}
+
+void uiHomeMenu (xEvent_t *pxEvent) {
+
+	static const xMenuItem_t homeMenu[8] = {
+			{ MKS_PIC_FL "/bmp_zeroA.bin", NULL },
+			{ MKS_PIC_FL "/bmp_zeroX.bin", NULL },
+			{ MKS_PIC_FL "/bmp_zeroY.bin", NULL },
+			{ MKS_PIC_FL "/bmp_zeroZ.bin", NULL },
+			{ NULL, NULL },
+			{ NULL, NULL },
+			{ NULL, NULL },
+			{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
+	};
+
+	uiMenuHandleEventDefault(homeMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Home", 0xffffu);
+}
+
+typedef enum {
+	MOVE_01 = 0,
+	MOVE_1,
+	MOVE_5,
+	MOVE_10
+} xMoveStep_t;
+
+static BYTE moveStep = MOVE_10;
+static xMenuItem_t moveMenu[8] = {
+		{ MKS_PIC_FL "/bmp_xAdd.bin", NULL },
+		{ MKS_PIC_FL "/bmp_yAdd.bin", NULL },
+		{ MKS_PIC_FL "/bmp_zAdd.bin", NULL },
+		{ MKS_PIC_FL "/bmp_step10_mm.bin", uiMoveMenuStepChange },
+		{ MKS_PIC_FL "/bmp_xDec.bin", NULL },
+		{ MKS_PIC_FL "/bmp_yDec.bin", NULL },
+		{ MKS_PIC_FL "/bmp_zDec.bin", NULL },
+		{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
+};
+
+void uiMoveMenu (xEvent_t *pxEvent) {
+
+	uiMenuHandleEventDefault(moveMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Move", 0xffffu);
+}
+
+void uiMoveMenuStepChange (xEvent_t *pxEvent) {
+
+	if (INIT_EVENT == pxEvent->ucEventID) {
+		switch(moveStep) {
+		case MOVE_10:
+			moveStep = MOVE_01;
+			moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step_move0_1.bin";
+			break;
+
+		case MOVE_01:
+			moveStep = MOVE_1;
+			moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step_move1.bin";
+			break;
+
+		case MOVE_1:
+			moveStep = MOVE_5;
+			moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step5_mm.bin";
+			break;
+
+		default:
+			moveStep = MOVE_10;
+			moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step10_mm.bin";
+			break;
 		}
-		break;
-
-	case SDCARD_INSERT:
-	case SDCARD_REMOVE:
-	case USBDRIVE_INSERT:
-	case USBDRIVE_REMOVE:
-		uiMediaStateChange(pxEvent->ucEventID);
-		break;
-
-	default:
-		break;
 	}
+
+#if 0
+	uiNextState(uiMoveMenu);
+#else
+	processEvent = uiMoveMenu;
+	xEvent_t event = { UPDATE4_EVENT };
+	xQueueSendToBack(xEventQueue, &event, 1000);
+#endif
 }
 
 static TCHAR fname_table[FLIST_SIZE][NAMELEN];
@@ -428,6 +596,9 @@ static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y, uint16_t wi
 	FIL *pIconFile = NULL;
 	BYTE *pBuffer = NULL;
 
+	if (!path)
+		return;
+
 	Lcd_Com_Data ((Lcd_Orientation() & 1) ? 0x0052 : 0x0050, x);
 	Lcd_Com_Data ((Lcd_Orientation() & 1) ? 0x0050 : 0x0052, y);
 	Lcd_Com_Data ((Lcd_Orientation() & 1) ? 0x0053 : 0x0051, x + width - 1);
@@ -473,13 +644,6 @@ static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y, uint16_t wi
 		Lcd_Com_Data(0x0052, 0x0000);		  // Window Vertical RAM Address Start (R52h)
 		Lcd_Com_Data(0x0053, 319);			  // Window Vertical RAM Address End (R53h)
 	}
-}
-
-static void uiShortBeep() {
-
-	HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
-	osDelay(100);
-	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
 }
 
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/

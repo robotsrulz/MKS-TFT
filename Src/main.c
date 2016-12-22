@@ -612,7 +612,7 @@ void StartUITask(void const * argument) {
 	/* USER CODE BEGIN 5 */
 
 	HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
-	osDelay(200);
+	osDelay(100);
 	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
 
 	xEvent_t event;

@@ -51,6 +51,14 @@ typedef struct
 {
     enum {
     	INIT_EVENT = 0,
+		UPDATE1_EVENT,
+		UPDATE2_EVENT,
+		UPDATE3_EVENT,
+		UPDATE4_EVENT,
+		UPDATE5_EVENT,
+		UPDATE6_EVENT,
+		UPDATE7_EVENT,
+		UPDATE8_EVENT,
     	TOUCH_DOWN_EVENT,
 		TOUCH_UP_EVENT,
 		SDCARD_INSERT,
@@ -64,7 +72,9 @@ typedef struct
 } xEvent_t;
 
 extern QueueHandle_t xEventQueue;
-extern void (*volatile processEvent) (xEvent_t *pxEvent);
+
+typedef void (*volatile eventProcessor_t) (xEvent_t *);
+extern eventProcessor_t processEvent;
 
 #endif /* __UI_H */
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/
