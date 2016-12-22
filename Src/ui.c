@@ -79,7 +79,7 @@ static void uiDrawBinIcon(const TCHAR *path, uint16_t x, uint16_t y,
 __STATIC_INLINE void uiNextState(void (*volatile next) (xEvent_t *pxEvent)) {
 	processEvent = next;
 	xEvent_t event = { INIT_EVENT };
-	xQueueSendToBack(xEventQueue, &event, 1000);
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
 }
 
 __STATIC_INLINE void uiShortBeep() {
@@ -109,6 +109,8 @@ __STATIC_INLINE void uiDrawMenu(const xMenuItem_t *pMenu) {
 	}
 }
 
+static uint16_t touchX, touchY;
+
 __STATIC_INLINE void uiMenuHandleEventDefault(const xMenuItem_t *pMenu, xEvent_t *pxEvent) {
 
 	if (pxEvent) {
@@ -124,36 +126,40 @@ __STATIC_INLINE void uiMenuHandleEventDefault(const xMenuItem_t *pMenu, xEvent_t
 			if (pMenu) {
 				Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0));
 				uiDrawMenu(pMenu);
+#if 1
+				char buffer[12];
+				sprintf(buffer, "%05u:%05u", touchX, touchY);
+				Lcd_Put_Text(10, LCD_MAX_Y - 9, 8, buffer, 0xffffu);
+#endif
 			}
 			break;
 
-		case TOUCH_DOWN_EVENT:
+//		case TOUCH_DOWN_EVENT:
+		case TOUCH_UP_EVENT:
 			if (pMenu) {
-
-				uint16_t x, y;
 				eventProcessor_t p = NULL;
 
 				Lcd_Translate_Touch_Pos((pxEvent->ucData.touchXY) >> 16 & 0x7fffu,
-						pxEvent->ucData.touchXY & 0x7fffu, &x, &y);
+						pxEvent->ucData.touchXY & 0x7fffu, &touchX, &touchY);
 
 				uiShortBeep();
-				if (y >= 16 && y <= 16 + 104) {
-					p = pMenu[(x - 1) / 80].pEventProcessor;
+				if (touchY >= 16 && touchY <= 16 + 104) {
+					p = pMenu[(touchX - 1) / 80].pEventProcessor;
 
-				} else if (y >= 16 + 104 && y <= 16 + 104 + 80) {
-					p = pMenu[4 + (x - 1) / 80].pEventProcessor;
+				} else if (touchY >= 16 + 104 && touchY <= 16 + 104 + 80) {
+					p = pMenu[4 + (touchX - 1) / 80].pEventProcessor;
 				}
 				if (p) uiNextState(p);
 			}
 			break;
 
-		case UPDATE1_EVENT: uiDrawBinIcon(pMenu[0].pIconFile,	1, 16, 78, 104, 0); break;
-		case UPDATE2_EVENT: uiDrawBinIcon(pMenu[1].pIconFile,  81, 16, 78, 104, 0); break;
-		case UPDATE3_EVENT: uiDrawBinIcon(pMenu[2].pIconFile, 161, 16, 78, 104, 0); break;
-		case UPDATE4_EVENT: uiDrawBinIcon(pMenu[3].pIconFile, 241, 16, 78, 104, 0); break;
-		case UPDATE5_EVENT: uiDrawBinIcon(pMenu[4].pIconFile,	1, 18 + 104, 78, 104, 0); break;
-		case UPDATE6_EVENT: uiDrawBinIcon(pMenu[5].pIconFile,  81, 18 + 104, 78, 104, 0); break;
-		case UPDATE7_EVENT: uiDrawBinIcon(pMenu[6].pIconFile, 161, 18 + 104, 78, 104, 0); break;
+		case UPDATE1_EVENT: uiDrawBinIcon(pMenu[0].pIconFile,	1, 16, 78, 104, 1); break;
+		case UPDATE2_EVENT: uiDrawBinIcon(pMenu[1].pIconFile,  81, 16, 78, 104, 1); break;
+		case UPDATE3_EVENT: uiDrawBinIcon(pMenu[2].pIconFile, 161, 16, 78, 104, 1); break;
+		case UPDATE4_EVENT: uiDrawBinIcon(pMenu[3].pIconFile, 241, 16, 78, 104, 1); break;
+		case UPDATE5_EVENT: uiDrawBinIcon(pMenu[4].pIconFile,	1, 18 + 104, 78, 104, 1); break;
+		case UPDATE6_EVENT: uiDrawBinIcon(pMenu[5].pIconFile,  81, 18 + 104, 78, 104, 1); break;
+		case UPDATE7_EVENT: uiDrawBinIcon(pMenu[6].pIconFile, 161, 18 + 104, 78, 104, 1); break;
 		case UPDATE8_EVENT: uiDrawBinIcon(pMenu[7].pIconFile, 241, 18 + 104, 78, 104, 1); break;
 
 		default:
@@ -361,7 +367,7 @@ void uiMoveMenuStepChange (xEvent_t *pxEvent) {
 #else
 	processEvent = uiMoveMenu;
 	xEvent_t event = { UPDATE4_EVENT };
-	xQueueSendToBack(xEventQueue, &event, 1000);
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
 #endif
 }
 

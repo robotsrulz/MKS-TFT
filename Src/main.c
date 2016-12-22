@@ -51,16 +51,20 @@ SPI_HandleTypeDef hspi3;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 
-osThreadId uiTaskHandle;
-
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+
+static osThreadId uiTaskHandlerHandle;	// UI thread
+static osThreadId comm1TaskHandle;		// printing thread
+static osThreadId comm2TaskHandle;		// wi-fi/bt thread
 static osThreadId touchHandlerHandle;	// touch screen finger up/down
 static osThreadId sdcardHandlerHandle;	// sd card insert/remove
 
-QueueHandle_t xEventQueue;
+QueueHandle_t xUIEventQueue;
+QueueHandle_t xPCommEventQueue;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,10 +77,12 @@ static void MX_SPI1_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
-void StartUITask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+void StartUITask(void const * argument);
+void StartComm1Task(void const * argument);
+void StartComm2Task(void const * argument);
 void StartTouchHandlerTask(void const * argument);
 void StartSDHandlerTask(void const * argument);
 
@@ -90,86 +96,93 @@ static SemaphoreHandle_t xSDSemaphore;
 
 int main(void)
 {
+	/* USER CODE BEGIN 1 */
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE END 1 */
 
-  /* USER CODE END 1 */
+	/* MCU Configuration----------------------------------------------------------*/
 
-  /* MCU Configuration----------------------------------------------------------*/
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_TIM2_Init();
+	MX_I2C1_Init();
+	MX_SPI1_Init();
+	MX_SPI3_Init();
+	MX_USART2_UART_Init();
+	MX_USART3_UART_Init();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_TIM2_Init();
-  MX_I2C1_Init();
-  MX_SPI1_Init();
-  MX_SPI3_Init();
-  MX_USART2_UART_Init();
-  MX_USART3_UART_Init();
+	/* USER CODE BEGIN 2 */
 
-  /* USER CODE BEGIN 2 */
+	/* USER CODE END 2 */
 
-  /* USER CODE END 2 */
+	/* USER CODE BEGIN RTOS_MUTEX */
+	/* add mutexes, ... */
+	/* USER CODE END RTOS_MUTEX */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+	/* USER CODE BEGIN RTOS_SEMAPHORES */
+	/* add semaphores, ... */
+	xTouchSemaphore = xSemaphoreCreateBinary();
+	xSDSemaphore = xSemaphoreCreateBinary();
+	/* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  xTouchSemaphore = xSemaphoreCreateBinary();
-  xSDSemaphore = xSemaphoreCreateBinary();
-  /* USER CODE END RTOS_SEMAPHORES */
+	/* USER CODE BEGIN RTOS_TIMERS */
+	/* start timers, add new ones, ... */
+	/* USER CODE END RTOS_TIMERS */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
+	/* Create the thread(s) */
+	/* definition and creation of uiTask */
 
-  /* Create the thread(s) */
-  /* definition and creation of uiTask */
+	/* USER CODE BEGIN RTOS_THREADS */
+	/* add threads, ... */
+	osThreadDef(touchHandlerTask, StartTouchHandlerTask, osPriorityNormal, 0, 128);
+	touchHandlerHandle = osThreadCreate(osThread(touchHandlerTask), NULL);
 
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  osThreadDef(touchHandlerTask, StartTouchHandlerTask, osPriorityNormal, 0, 128);
-  touchHandlerHandle = osThreadCreate(osThread(touchHandlerTask), NULL);
+	osThreadDef(sdcardHandlerTask, StartSDHandlerTask, osPriorityNormal, 0,	128);
+	sdcardHandlerHandle = osThreadCreate(osThread(sdcardHandlerTask), NULL);
 
-  osThreadDef(sdcardHandlerTask, StartSDHandlerTask, osPriorityNormal, 0, 128);
-  sdcardHandlerHandle = osThreadCreate(osThread(sdcardHandlerTask), NULL);
+	osThreadDef(comm1Task, StartComm1Task, osPriorityNormal, 0,	512);
+	comm1TaskHandle = osThreadCreate(osThread(comm1Task), NULL);
 
-  osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 14 * 1024 / 4);
-  uiTaskHandle = osThreadCreate(osThread(uiTask), NULL);
-  /* USER CODE END RTOS_THREADS */
+	osThreadDef(comm2Task, StartComm2Task, osPriorityNormal, 0,	128);
+	comm2TaskHandle = osThreadCreate(osThread(comm2Task), NULL);
 
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  xEventQueue = xQueueCreate(10, sizeof(xEvent_t));
-  if (xEventQueue == NULL) {
+	osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 14 * 1024 / 4);
+	uiTaskHandlerHandle = osThreadCreate(osThread(uiTask), NULL);
+	/* USER CODE END RTOS_THREADS */
+
+	/* USER CODE BEGIN RTOS_QUEUES */
+	/* add queues, ... */
+	xUIEventQueue = xQueueCreate(10, sizeof(xEvent_t));
+	if (xUIEventQueue == NULL) {
 		/* Queue was not created and must not be used. */
-  }
-  /* USER CODE END RTOS_QUEUES */
- 
+	}
 
-  /* Start scheduler */
-  osKernelStart();
-  
-  /* We should never get here as control is now taken by the scheduler */
+	xPCommEventQueue = xQueueCreate(10, sizeof(xEvent_t));
+	if (xPCommEventQueue == NULL) {
+		/* Queue was not created and must not be used. */
+	}
+	/* USER CODE END RTOS_QUEUES */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-  /* USER CODE END WHILE */
+	/* Start scheduler */
+	osKernelStart();
 
-  /* USER CODE BEGIN 3 */
+	/* We should never get here as control is now taken by the scheduler */
 
-  }
-  /* USER CODE END 3 */
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	while (1) {
+		/* USER CODE END WHILE */
 
+		/* USER CODE BEGIN 3 */
+
+	}
+	/* USER CODE END 3 */
 }
 
 /** System Clock Configuration
@@ -502,6 +515,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
+static uint16_t xTouchX = 0;
+static uint16_t xTouchY = 0;
+
 void StartTouchHandlerTask(void const * argument) {
 
 	uint8_t pTxData[3] = { 0xd4, 0, 0 };
@@ -562,21 +578,22 @@ void StartTouchHandlerTask(void const * argument) {
 
 				xEvent_t event;
 				event.ucEventID = TOUCH_DOWN_EVENT;
-				event.ucData.touchXY =
-						((unsigned int) Lcd_Touch_Get_Closest_Average(x) << 16)
-								+ Lcd_Touch_Get_Closest_Average(y);
 
-				xQueueSendToBack(xEventQueue, &event, 1000);
+				xTouchX = Lcd_Touch_Get_Closest_Average(x);
+				xTouchY = Lcd_Touch_Get_Closest_Average(y);
+				event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
+				xQueueSendToBack(xUIEventQueue, &event, 1000);
 
 				// TODO: continuous gesture recognition here!
-				osDelay(250); // limit touch event rate
+				osDelay(125); // limit touch event rate
 			} else {
 				xEvent_t event;
 				event.ucEventID = TOUCH_UP_EVENT;
-				xQueueSendToBack(xEventQueue, &event, 1000);
+				event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
+				xQueueSendToBack(xUIEventQueue, &event, 1000);
 
 				// TODO: continuous gesture recognition here!
-				osDelay(100);
+				osDelay(125);
 			}
 		}
 	}
@@ -594,8 +611,22 @@ void StartSDHandlerTask(void const * argument) {
 			event.ucEventID =
 					(HAL_GPIO_ReadPin(SDCARD_DETECT_GPIO_Port, SDCARD_DETECT_Pin)
 							== GPIO_PIN_RESET) ? SDCARD_INSERT : SDCARD_REMOVE;
-			xQueueSendToBack(xEventQueue, &event, 1000);
+			xQueueSendToBack(xUIEventQueue, &event, 1000);
 		}
+	}
+}
+
+void StartComm1Task(void const * argument) {
+
+	while (1) {
+		osDelay(1);
+	}
+}
+
+void StartComm2Task(void const * argument) {
+
+	while (1) {
+		osDelay(1);
 	}
 }
 
@@ -622,11 +653,11 @@ void StartUITask(void const * argument) {
 
 	/* Infinite loop */
 	for (;;) {
-		if (xEventQueue != 0) {
+		if (xUIEventQueue != 0) {
 
 			xEvent_t event;
 
-			if (xQueueReceive(xEventQueue, &event, (TickType_t ) 500)) {
+			if (xQueueReceive(xUIEventQueue, &event, (TickType_t ) 500)) {
 
 				(*processEvent) (&event);
 			} else {

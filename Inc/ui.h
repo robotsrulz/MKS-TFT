@@ -71,7 +71,7 @@ typedef struct
     } ucData;
 } xEvent_t;
 
-extern QueueHandle_t xEventQueue;
+extern QueueHandle_t xUIEventQueue;
 
 typedef void (*volatile eventProcessor_t) (xEvent_t *);
 extern eventProcessor_t processEvent;
