@@ -49,6 +49,10 @@ extern TIM_HandleTypeDef htim2;
 
 #define READY_PRINT	"MyFirmware"
 
+uint8_t moveStep = MOVE_10;
+uint8_t offMode = MANUAL_OFF;
+uint8_t connectSpeed = CONNECT_115200;
+
 /*
  * user callback declaration
  */
@@ -56,9 +60,21 @@ extern TIM_HandleTypeDef htim2;
 void uiInitialize (xEvent_t *pxEvent);
 void uiMainMenu   (xEvent_t *pxEvent);
 void uiHomeMenu   (xEvent_t *pxEvent);
+
 void uiMoveMenu   (xEvent_t *pxEvent);
-void uiMoveMenuStepChange (xEvent_t *pxEvent);
+void uiMoveMenuStepChange(xEvent_t *pxEvent);
+
 void uiSetupMenu  (xEvent_t *pxEvent);
+void uiSetupMenuOffMode(xEvent_t *pxEvent);
+void uiSetupConnectMenu(xEvent_t *pxEvent);
+void uiSetupConnect9600(xEvent_t *pxEvent);
+void uiSetupConnect57600(xEvent_t *pxEvent);
+void uiSetupConnect115200(xEvent_t *pxEvent);
+void uiSetupConnect250000(xEvent_t *pxEvent);
+void uiSetupWifi  (xEvent_t *pxEvent);
+void uiSetupAbout (xEvent_t *pxEvent);
+
+void uiMoreMenu   (xEvent_t *pxEvent);
 void uiFileBrowse (xEvent_t *pxEvent);
 
 typedef void (*volatile eventProcessor_t) (xEvent_t *);
@@ -162,6 +178,13 @@ __STATIC_INLINE void uiMenuHandleEventDefault(const xMenuItem_t *pMenu, xEvent_t
 		case UPDATE7_EVENT: uiDrawBinIcon(pMenu[6].pIconFile, 161, 18 + 104, 78, 104, 1); break;
 		case UPDATE8_EVENT: uiDrawBinIcon(pMenu[7].pIconFile, 241, 18 + 104, 78, 104, 1); break;
 
+		case UPDATE14_EVENT:
+			uiDrawBinIcon(pMenu[0].pIconFile,	1, 16, 78, 104, 0);
+			uiDrawBinIcon(pMenu[1].pIconFile,  81, 16, 78, 104, 0);
+			uiDrawBinIcon(pMenu[2].pIconFile, 161, 16, 78, 104, 0);
+			uiDrawBinIcon(pMenu[3].pIconFile, 241, 16, 78, 104, 1);
+			break;
+
 		default:
 			break;
 		}
@@ -259,14 +282,14 @@ void uiInitialize (xEvent_t *pxEvent) {
 void uiMainMenu (xEvent_t *pxEvent) {
 
 	static const xMenuItem_t mainMenu[8] = {
-			{ MKS_PIC_FL "/bmp_preHeat.bin", NULL },
-			{ MKS_PIC_FL "/bmp_mov.bin", uiMoveMenu },
-			{ MKS_PIC_FL "/bmp_zero.bin", uiHomeMenu },
-			{ MKS_PIC_FL "/bmp_printing.bin", uiFileBrowse },
-			{ MKS_PIC_FL "/bmp_extruct.bin", NULL },
-			{ MKS_PIC_FL "/bmp_fan.bin", NULL },
-			{ MKS_PIC_FL "/bmp_set.bin", uiSetupMenu },
-			{ MKS_PIC_FL "/bmp_More.bin", NULL }
+		{ MKS_PIC_FL "/bmp_preHeat.bin", NULL },
+		{ MKS_PIC_FL "/bmp_mov.bin", uiMoveMenu },
+		{ MKS_PIC_FL "/bmp_zero.bin", uiHomeMenu },
+		{ MKS_PIC_FL "/bmp_printing.bin", uiFileBrowse },
+		{ MKS_PIC_FL "/bmp_extruct.bin", NULL },
+		{ MKS_PIC_FL "/bmp_fan.bin", NULL },
+		{ MKS_PIC_FL "/bmp_set.bin", uiSetupMenu },
+		{ MKS_PIC_FL "/bmp_More.bin", uiMoreMenu }
 	};
 
 	uiMenuHandleEventDefault(mainMenu, pxEvent);
@@ -274,22 +297,150 @@ void uiMainMenu (xEvent_t *pxEvent) {
 		Lcd_Put_Text(0, 0, 16, READY_PRINT, 0xffffu);
 }
 
+static xMenuItem_t setupMenu[8] = {
+	{ MKS_PIC_FL "/bmp_fileSys.bin", NULL },
+	{ MKS_PIC_FL "/bmp_adj.bin", NULL },
+	{ MKS_PIC_FL "/bmp_wifi.bin", uiSetupWifi },
+	{ MKS_PIC_FL "/bmp_connect.bin", uiSetupConnectMenu },
+	{ MKS_PIC_FL "/bmp_about.bin", uiSetupAbout },
+	{ MKS_PIC_FL "/bmp_lang.bin", NULL },
+	{ MKS_PIC_FL "/bmp_manual_off.bin", uiSetupMenuOffMode },
+	{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
+};
+
 void uiSetupMenu (xEvent_t *pxEvent) {
 
-	static const xMenuItem_t setupMenu[8] = {
-			{ MKS_PIC_FL "/bmp_fileSys.bin", NULL },
-			{ MKS_PIC_FL "/bmp_mov.bin", NULL },
-			{ MKS_PIC_FL "/bmp_wifi.bin", NULL },
-			{ MKS_PIC_FL "/bmp_connect.bin", NULL },
-			{ MKS_PIC_FL "/bmp_about.bin", NULL },
-			{ MKS_PIC_FL "/bmp_fan.bin", NULL },
-			{ MKS_PIC_FL "/bmp_manual_off.bin", NULL },
-			{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
-	};
+	switch(offMode) {
+	case MANUAL_OFF:
+		setupMenu[6].pIconFile = MKS_PIC_FL "/bmp_auto_off.bin";
+		break;
+
+	default:
+		setupMenu[6].pIconFile = MKS_PIC_FL "/bmp_manual_off.bin";
+		break;
+	}
 
 	uiMenuHandleEventDefault(setupMenu, pxEvent);
 	if (INIT_EVENT == pxEvent->ucEventID)
 		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Set", 0xffffu);
+}
+
+void uiSetupMenuOffMode(xEvent_t *pxEvent) {
+
+	if (INIT_EVENT == pxEvent->ucEventID) {
+		switch(offMode) {
+		case MANUAL_OFF:
+			offMode = AUTO_OFF;
+			break;
+
+		default:
+			offMode = MANUAL_OFF;
+			break;
+		}
+	}
+
+	processEvent = uiSetupMenu;
+	xEvent_t event = { UPDATE7_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+static xMenuItem_t setupConnectMenu[8] = {
+	{ NULL, uiSetupConnect9600 },
+	{ NULL, uiSetupConnect57600 },
+	{ NULL, uiSetupConnect115200 },
+	{ NULL, uiSetupConnect250000 },
+	{ NULL, NULL },
+	{ NULL, NULL },
+	{ NULL, NULL },
+	{ MKS_PIC_FL "/bmp_return.bin", uiSetupMenu }
+};
+
+void uiSetupConnectMenu(xEvent_t *pxEvent) {
+
+	setupConnectMenu[0].pIconFile =
+			(connectSpeed == CONNECT_9600) ?
+					MKS_PIC_FL "/bmp_baud9600.bin" :
+					MKS_PIC_FL "/bmp_baud9600_sel.bin";
+	setupConnectMenu[1].pIconFile =
+			(connectSpeed == CONNECT_57600) ?
+					MKS_PIC_FL "/bmp_baud57600.bin" :
+					MKS_PIC_FL "/bmp_baud57600_sel.bin";
+	setupConnectMenu[2].pIconFile =
+			(connectSpeed == CONNECT_115200) ?
+					MKS_PIC_FL "/bmp_baud115200.bin" :
+					MKS_PIC_FL "/bmp_baud115200_sel.bin";
+	setupConnectMenu[3].pIconFile =
+			(connectSpeed == CONNECT_250000) ?
+					MKS_PIC_FL "/bmp_baud250000.bin" :
+					MKS_PIC_FL "/bmp_baud250000_sel.bin";
+
+	uiMenuHandleEventDefault(setupConnectMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Set>ConnectSpeed", 0xffffu);
+}
+
+void uiSetupConnect9600(xEvent_t *pxEvent) {
+	connectSpeed = CONNECT_9600;
+	processEvent = uiSetupConnectMenu;
+	xEvent_t event = { UPDATE14_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+void uiSetupConnect57600(xEvent_t *pxEvent) {
+	connectSpeed = CONNECT_57600;
+	processEvent = uiSetupConnectMenu;
+	xEvent_t event = { UPDATE14_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+void uiSetupConnect115200(xEvent_t *pxEvent) {
+	connectSpeed = CONNECT_115200;
+	processEvent = uiSetupConnectMenu;
+	xEvent_t event = { UPDATE14_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+void uiSetupConnect250000(xEvent_t *pxEvent) {
+	connectSpeed = CONNECT_250000;
+	processEvent = uiSetupConnectMenu;
+	xEvent_t event = { UPDATE14_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+void uiSetupWifi (xEvent_t *pxEvent) {
+
+	static const xMenuItem_t setupWifiMenu[8] = {
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ MKS_PIC_FL "/bmp_return.bin", uiSetupMenu }
+	};
+
+	uiMenuHandleEventDefault(setupWifiMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Set>Wifi", 0xffffu);
+}
+
+void uiSetupAbout(xEvent_t *pxEvent) {
+
+	static const xMenuItem_t setupAboutMenu[8] = {
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ MKS_PIC_FL "/bmp_return.bin", uiSetupMenu }
+	};
+
+	uiMenuHandleEventDefault(setupAboutMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Set>About", 0xffffu);
 }
 
 void uiHomeMenu (xEvent_t *pxEvent) {
@@ -310,14 +461,6 @@ void uiHomeMenu (xEvent_t *pxEvent) {
 		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Home", 0xffffu);
 }
 
-typedef enum {
-	MOVE_01 = 0,
-	MOVE_1,
-	MOVE_5,
-	MOVE_10
-} xMoveStep_t;
-
-static BYTE moveStep = MOVE_10;
 static xMenuItem_t moveMenu[8] = {
 		{ MKS_PIC_FL "/bmp_xAdd.bin", NULL },
 		{ MKS_PIC_FL "/bmp_yAdd.bin", NULL },
@@ -331,6 +474,21 @@ static xMenuItem_t moveMenu[8] = {
 
 void uiMoveMenu (xEvent_t *pxEvent) {
 
+	switch(moveStep) {
+	case MOVE_10:
+		moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step_move0_1.bin";
+		break;
+	case MOVE_01:
+		moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step_move1.bin";
+		break;
+	case MOVE_1:
+		moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step5_mm.bin";
+		break;
+	default:
+		moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step10_mm.bin";
+		break;
+	}
+
 	uiMenuHandleEventDefault(moveMenu, pxEvent);
 	if (INIT_EVENT == pxEvent->ucEventID)
 		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Move", 0xffffu);
@@ -342,34 +500,42 @@ void uiMoveMenuStepChange (xEvent_t *pxEvent) {
 		switch(moveStep) {
 		case MOVE_10:
 			moveStep = MOVE_01;
-			moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step_move0_1.bin";
 			break;
-
 		case MOVE_01:
 			moveStep = MOVE_1;
-			moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step_move1.bin";
 			break;
-
 		case MOVE_1:
 			moveStep = MOVE_5;
-			moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step5_mm.bin";
 			break;
-
 		default:
 			moveStep = MOVE_10;
-			moveMenu[3].pIconFile = MKS_PIC_FL "/bmp_step10_mm.bin";
 			break;
 		}
 	}
 
-#if 0
-	uiNextState(uiMoveMenu);
-#else
 	processEvent = uiMoveMenu;
 	xEvent_t event = { UPDATE4_EVENT };
 	xQueueSendToFront(xUIEventQueue, &event, 1000);
-#endif
 }
+
+void uiMoreMenu (xEvent_t *pxEvent) {
+
+	static const xMenuItem_t moreMenu[8] = {
+			{ MKS_PIC_FL /* "/bmp_morefunc1.bin" */ "/bmp_custom1.bin", NULL },
+			{ MKS_PIC_FL /* "/bmp_morefunc2.bin" */ "/bmp_custom2.bin", NULL },
+			{ MKS_PIC_FL /* "/bmp_morefunc3.bin" */ "/bmp_custom3.bin", NULL },
+			{ MKS_PIC_FL /* "/bmp_morefunc4.bin" */ "/bmp_custom4.bin", NULL },
+			{ MKS_PIC_FL /* "/bmp_morefunc5.bin" */ "/bmp_custom5.bin", NULL },
+			{ MKS_PIC_FL /* "/bmp_morefunc6.bin" */ "/bmp_custom6.bin", NULL },
+			{ NULL, NULL },
+			{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
+	};
+
+	uiMenuHandleEventDefault(moreMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">More", 0xffffu);
+}
+
 
 static TCHAR fname_table[FLIST_SIZE][NAMELEN];
 static int row_selected = -1;

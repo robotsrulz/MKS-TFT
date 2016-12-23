@@ -59,6 +59,7 @@ typedef struct
 		UPDATE6_EVENT,
 		UPDATE7_EVENT,
 		UPDATE8_EVENT,
+		UPDATE14_EVENT,
     	TOUCH_DOWN_EVENT,
 		TOUCH_UP_EVENT,
 		SDCARD_INSERT,
@@ -75,6 +76,28 @@ extern QueueHandle_t xUIEventQueue;
 
 typedef void (*volatile eventProcessor_t) (xEvent_t *);
 extern eventProcessor_t processEvent;
+
+typedef enum {
+	MOVE_01 = 0,
+	MOVE_1,
+	MOVE_5,
+	MOVE_10
+} xMoveStep_t;
+extern uint8_t moveStep;
+
+typedef enum {
+	MANUAL_OFF = 0,
+	AUTO_OFF
+} xOffMode_t;
+extern uint8_t offMode;
+
+typedef enum {
+	CONNECT_9600 = 0,
+	CONNECT_57600,
+	CONNECT_115200,
+	CONNECT_250000
+} xConnectSpeed_t;
+extern uint8_t connectSpeed;
 
 #endif /* __UI_H */
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/

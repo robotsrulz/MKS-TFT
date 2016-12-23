@@ -158,7 +158,7 @@ int main(void)
 
 	/* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-	xUIEventQueue = xQueueCreate(10, sizeof(xEvent_t));
+	xUIEventQueue = xQueueCreate(1, sizeof(xEvent_t));
 	if (xUIEventQueue == NULL) {
 		/* Queue was not created and must not be used. */
 	}
