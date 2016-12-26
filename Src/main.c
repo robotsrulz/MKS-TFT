@@ -341,9 +341,9 @@ static void MX_USART3_UART_Init(void)
 
 }
 
-/** Configure pins as 
-        * Analog 
-        * Input 
+/** Configure pins as
+        * Analog
+        * Input
         * Output
         * EVENT_OUT
         * EXTI
@@ -453,7 +453,7 @@ static void MX_TIM2_Init(void)
 	htim2.Instance = TIM2;
 	htim2.Init.Prescaler = 0;
 	htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim2.Init.Period = 7199;
+	htim2.Init.Period = 14399;
 	htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	if (HAL_TIM_Base_Init(&htim2) != HAL_OK) {
 		Error_Handler();
@@ -643,7 +643,7 @@ void StartUITask(void const * argument) {
 	/* USER CODE BEGIN 5 */
 
 	HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
-	osDelay(100);
+	osDelay(50);
 	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
 
 	xEvent_t event;
@@ -708,10 +708,10 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 /**
   * @}
-  */ 
+  */
 
 /**
   * @}
-*/ 
+*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -52,6 +52,11 @@ extern TIM_HandleTypeDef htim2;
 uint8_t moveStep = MOVE_10;
 uint8_t offMode = MANUAL_OFF;
 uint8_t connectSpeed = CONNECT_115200;
+uint8_t preheatDev = PR_EXTRUDER_1;
+uint8_t extrudeDev = EXTRUDER_1;
+uint8_t preheatSelDegree = STEP_1_DEGREE;
+uint8_t extrudeDistance = DISTANCE_1;
+uint8_t extrudeSelSpeed = SPEED_SLOW;
 
 /*
  * user callback declaration
@@ -59,7 +64,17 @@ uint8_t connectSpeed = CONNECT_115200;
 
 void uiInitialize (xEvent_t *pxEvent);
 void uiMainMenu   (xEvent_t *pxEvent);
+void uiPreheatMenu(xEvent_t *pxEvent);
 void uiHomeMenu   (xEvent_t *pxEvent);
+
+void uiPreheatMenu(xEvent_t *pxEvent);
+void uiPreheatSelectDev(xEvent_t *pxEvent);
+void uiPreheatSelectStep(xEvent_t *pxEvent);
+
+void uiExtrudeMenu(xEvent_t *pxEvent);
+void uiExtrudeSelectDev(xEvent_t *pxEvent);
+void uiExtrudeSelectStep(xEvent_t *pxEvent);
+void uiExtrudeSelectSpeed(xEvent_t *pxEvent);
 
 void uiMoveMenu   (xEvent_t *pxEvent);
 void uiMoveMenuStepChange(xEvent_t *pxEvent);
@@ -100,7 +115,7 @@ __STATIC_INLINE void uiNextState(void (*volatile next) (xEvent_t *pxEvent)) {
 
 __STATIC_INLINE void uiShortBeep() {
 	HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
-	osDelay(50);
+	osDelay(12);
 	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
 }
 
@@ -205,8 +220,12 @@ void uiInitialize (xEvent_t *pxEvent) {
 		Lcd_Fill_Screen(Lcd_Get_RGB565(0, 0, 0));
 
 		// mount internal flash, format if needed
-		if (FR_NO_FILESYSTEM == f_mount(&flashFileSystem, SPIFL_Path, 1)) {
+		f_mount(&flashFileSystem, SPIFL_Path, 1);  // mount flash
+		f_mount(&sdFileSystem, SPISD_Path, 1);      // mount sd card, mount usb later
 
+		if (sdFileSystem.fs_type && FR_OK == f_opendir(&dir, MKS_PIC_SD)) {
+
+			FRESULT res = FR_OK; /* Open the directory */
 			BYTE *work = pvPortMalloc(_MAX_SS);
 			if (work) {
 
@@ -215,14 +234,6 @@ void uiInitialize (xEvent_t *pxEvent) {
 
 				f_mount(&flashFileSystem, SPIFL_Path, 1);
 			}
-		}
-
-		f_mount(&sdFileSystem, SPISD_Path, 1);	// mount sd card, mount usb later
-
-		if (flashFileSystem.fs_type && sdFileSystem.fs_type
-				&& FR_OK == f_opendir(&dir, MKS_PIC_SD)) {
-
-			FRESULT res = FR_OK; /* Open the directory */
 
 			res = f_mkdir(MKS_PIC_FL);
 			if (res == FR_OK || res == FR_EXIST) {
@@ -282,11 +293,11 @@ void uiInitialize (xEvent_t *pxEvent) {
 void uiMainMenu (xEvent_t *pxEvent) {
 
 	static const xMenuItem_t mainMenu[8] = {
-		{ MKS_PIC_FL "/bmp_preHeat.bin", NULL },
+		{ MKS_PIC_FL "/bmp_preHeat.bin", uiPreheatMenu },
 		{ MKS_PIC_FL "/bmp_mov.bin", uiMoveMenu },
 		{ MKS_PIC_FL "/bmp_zero.bin", uiHomeMenu },
 		{ MKS_PIC_FL "/bmp_printing.bin", uiFileBrowse },
-		{ MKS_PIC_FL "/bmp_extruct.bin", NULL },
+		{ MKS_PIC_FL "/bmp_extruct.bin", uiExtrudeMenu },
 		{ MKS_PIC_FL "/bmp_fan.bin", NULL },
 		{ MKS_PIC_FL "/bmp_set.bin", uiSetupMenu },
 		{ MKS_PIC_FL "/bmp_More.bin", uiMoreMenu }
@@ -492,6 +503,231 @@ void uiMoveMenu (xEvent_t *pxEvent) {
 	uiMenuHandleEventDefault(moveMenu, pxEvent);
 	if (INIT_EVENT == pxEvent->ucEventID)
 		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Move", 0xffffu);
+}
+
+static xMenuItem_t preheatMenu[8] = {
+		{ MKS_PIC_FL "/bmp_Add.bin", NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ MKS_PIC_FL "/bmp_Dec.bin", NULL },
+		{ MKS_PIC_FL "/bmp_extru1.bin", uiPreheatSelectDev },
+		{ MKS_PIC_FL "/bmp_step1_degree.bin", uiPreheatSelectStep },
+		{ MKS_PIC_FL "/bmp_manual_off.bin", NULL },
+		{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
+};
+
+void uiPreheatMenu(xEvent_t *pxEvent) {
+
+    switch(preheatDev)
+    {
+    case PR_EXTRUDER_1:
+        preheatMenu[4].pIconFile = MKS_PIC_FL "/bmp_extru1.bin";
+        break;
+
+    case PR_EXTRUDER_2:
+        preheatMenu[4].pIconFile = MKS_PIC_FL "/bmp_extru2.bin";
+        break;
+
+    default:
+        preheatMenu[4].pIconFile = MKS_PIC_FL "/bmp_bed.bin";
+        break;
+    }
+
+    switch (preheatSelDegree)
+    {
+    case STEP_1_DEGREE:
+        preheatMenu[5].pIconFile = MKS_PIC_FL "/bmp_step1_degree.bin";
+        break;
+
+    case STEP_5_DEGREE:
+        preheatMenu[5].pIconFile = MKS_PIC_FL "/bmp_step5_degree.bin";
+        break;
+
+    case STEP_10_DEGREE:
+    default:
+        preheatMenu[5].pIconFile = MKS_PIC_FL "/bmp_step10_degree.bin";
+        break;
+    }
+
+    uiMenuHandleEventDefault(preheatMenu, pxEvent);
+    if (INIT_EVENT == pxEvent->ucEventID)
+        Lcd_Put_Text(0, 0, 16, READY_PRINT ">Preheat", 0xffffu);
+}
+
+void uiPreheatSelectDev(xEvent_t *pxEvent) {
+
+    if (INIT_EVENT == pxEvent->ucEventID) {
+        switch(preheatDev) {
+        case PR_EXTRUDER_1:
+            preheatDev = PR_EXTRUDER_2;
+            break;
+
+        case PR_EXTRUDER_2:
+            preheatDev = PR_HEATBED;
+            break;
+
+        default:
+            preheatDev = PR_EXTRUDER_1;
+            break;
+        }
+    }
+
+    processEvent = uiPreheatMenu;
+	xEvent_t event = { UPDATE5_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+void uiPreheatSelectStep(xEvent_t *pxEvent) {
+
+    if (INIT_EVENT == pxEvent->ucEventID) {
+        switch (preheatSelDegree) {
+        case STEP_1_DEGREE:
+            preheatSelDegree = STEP_5_DEGREE;
+            break;
+
+        case STEP_5_DEGREE:
+            preheatSelDegree = STEP_10_DEGREE;
+            break;
+
+        case STEP_10_DEGREE:
+        default:
+            preheatSelDegree = STEP_1_DEGREE;
+            break;
+        }
+    }
+
+    processEvent = uiPreheatMenu;
+	xEvent_t event = { UPDATE6_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+static xMenuItem_t extrudeMenu[8] = {
+		{ MKS_PIC_FL "/bmp_in.bin", NULL },
+		{ NULL, NULL },
+		{ NULL, NULL },
+		{ MKS_PIC_FL "/bmp_out.bin", NULL },
+		{ MKS_PIC_FL "/bmp_extru1.bin", uiExtrudeSelectDev },
+		{ MKS_PIC_FL "/bmp_step1_mm.bin", uiExtrudeSelectStep },
+		{ MKS_PIC_FL "/bmp_speed_slow.bin", uiExtrudeSelectSpeed },
+		{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
+};
+
+void uiExtrudeMenu(xEvent_t *pxEvent) {
+
+    switch(extrudeDev)
+    {
+    case EXTRUDER_1:
+        extrudeMenu[4].pIconFile = MKS_PIC_FL "/bmp_extru1.bin";
+        break;
+
+    default:
+        extrudeMenu[4].pIconFile = MKS_PIC_FL "/bmp_extru2.bin";
+        break;
+    }
+
+    switch (extrudeDistance)
+    {
+    case DISTANCE_1:
+        extrudeMenu[5].pIconFile = MKS_PIC_FL "/bmp_step1_mm.bin";
+        break;
+
+    case DISTANCE_5:
+        extrudeMenu[5].pIconFile = MKS_PIC_FL "/bmp_step5_mm.bin";
+        break;
+
+    case DISTANCE_10:
+    default:
+        extrudeMenu[5].pIconFile = MKS_PIC_FL "/bmp_step10_mm.bin";
+        break;
+    }
+
+    switch (extrudeSelSpeed)
+    {
+    case SPEED_SLOW:
+        extrudeMenu[6].pIconFile = MKS_PIC_FL "/bmp_speed_slow.bin";
+        break;
+
+    case SPEED_NORMAL:
+        extrudeMenu[6].pIconFile = MKS_PIC_FL "/bmp_speed_normal.bin";
+        break;
+
+    case SPEED_HIGH:
+    default:
+        extrudeMenu[6].pIconFile = MKS_PIC_FL "/bmp_speed_high.bin";
+        break;
+    }
+
+    uiMenuHandleEventDefault(extrudeMenu, pxEvent);
+    if (INIT_EVENT == pxEvent->ucEventID)
+        Lcd_Put_Text(0, 0, 16, READY_PRINT ">Extrude", 0xffffu);
+}
+
+void uiExtrudeSelectDev(xEvent_t *pxEvent) {
+
+    if (INIT_EVENT == pxEvent->ucEventID) {
+        switch(extrudeDev) {
+        case EXTRUDER_1:
+            extrudeDev = EXTRUDER_2;
+            break;
+
+        case EXTRUDER_2:
+        default:
+            extrudeDev = EXTRUDER_1;
+            break;
+        }
+    }
+
+    processEvent = uiExtrudeMenu;
+	xEvent_t event = { UPDATE5_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+void uiExtrudeSelectStep(xEvent_t *pxEvent) {
+
+    if (INIT_EVENT == pxEvent->ucEventID) {
+        switch (extrudeDistance) {
+        case DISTANCE_1:
+            extrudeDistance = DISTANCE_5;
+            break;
+
+        case DISTANCE_5:
+            extrudeDistance = DISTANCE_10;
+            break;
+
+        case DISTANCE_10:
+        default:
+            extrudeDistance = DISTANCE_1;
+            break;
+        }
+    }
+
+    processEvent = uiExtrudeMenu;
+	xEvent_t event = { UPDATE6_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+void uiExtrudeSelectSpeed(xEvent_t *pxEvent) {
+
+    if (INIT_EVENT == pxEvent->ucEventID) {
+        switch (extrudeSelSpeed) {
+        case SPEED_SLOW:
+            extrudeSelSpeed = SPEED_NORMAL;
+            break;
+
+        case SPEED_NORMAL:
+            extrudeSelSpeed = SPEED_HIGH;
+            break;
+
+        case SPEED_HIGH:
+        default:
+            extrudeSelSpeed = SPEED_SLOW;
+            break;
+        }
+    }
+
+    processEvent = uiExtrudeMenu;
+	xEvent_t event = { UPDATE7_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
 }
 
 void uiMoveMenuStepChange (xEvent_t *pxEvent) {

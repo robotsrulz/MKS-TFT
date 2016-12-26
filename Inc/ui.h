@@ -99,5 +99,39 @@ typedef enum {
 } xConnectSpeed_t;
 extern uint8_t connectSpeed;
 
+typedef enum {
+	PR_EXTRUDER_1 = 0,
+	PR_EXTRUDER_2,
+	PR_HEATBED
+} xPreheatDev_t;
+extern uint8_t preheatDev;
+
+typedef enum {
+    STEP_1_DEGREE = 0,
+    STEP_5_DEGREE,
+    STEP_10_DEGREE
+} xStepDegree_t;
+extern uint8_t preheatSelDegree;
+
+typedef enum {
+	EXTRUDER_1 = 0,
+	EXTRUDER_2
+} xExtrudeDev_t;
+extern uint8_t extrudeDev;
+
+typedef enum {
+	DISTANCE_1 = 0,
+	DISTANCE_5,
+	DISTANCE_10
+} xExtrudeDistance_t;
+extern uint8_t extrudeDistance;
+
+typedef enum {
+    SPEED_SLOW = 0,
+    SPEED_NORMAL,
+    SPEED_HIGH
+} xExtrudeSpeed_t;
+extern uint8_t extrudeSelSpeed;
+
 #endif /* __UI_H */
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/
