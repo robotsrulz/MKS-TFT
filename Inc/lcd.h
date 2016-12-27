@@ -50,10 +50,10 @@ typedef enum {
 
 uint8_t Lcd_Orientation(void);
 
-#define TOUCH_X_LOW		3300
-#define TOUCH_X_HIGH	31300
-#define TOUCH_Y_LOW		1900
-#define TOUCH_Y_HIGH	30300
+#define TOUCH_X_LOW		1700
+#define TOUCH_X_HIGH	30000
+#define TOUCH_Y_LOW		2000
+#define TOUCH_Y_HIGH	30000
 
 short Lcd_Touch_Get_Closest_Average(uint16_t *d3);
 void Lcd_Translate_Touch_Pos(uint16_t raw_x, uint16_t raw_y, uint16_t *x,

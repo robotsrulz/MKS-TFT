@@ -57,6 +57,7 @@ uint8_t extrudeDev = EXTRUDER_1;
 uint8_t preheatSelDegree = STEP_1_DEGREE;
 uint8_t extrudeDistance = DISTANCE_1;
 uint8_t extrudeSelSpeed = SPEED_SLOW;
+uint8_t selectedFs = FS_SD;
 
 /*
  * user callback declaration
@@ -79,13 +80,21 @@ void uiExtrudeSelectSpeed(xEvent_t *pxEvent);
 void uiMoveMenu   (xEvent_t *pxEvent);
 void uiMoveMenuStepChange(xEvent_t *pxEvent);
 
+void uiFanMenu    (xEvent_t *pxEvent);
+
 void uiSetupMenu  (xEvent_t *pxEvent);
 void uiSetupMenuOffMode(xEvent_t *pxEvent);
+
+void uiSetupFilesystemMenu(xEvent_t *pxEvent);
+void uiSetupFilesystemSD(xEvent_t *pxEvent);
+void uiSetupFilesystemUSB(xEvent_t *pxEvent);
+
 void uiSetupConnectMenu(xEvent_t *pxEvent);
 void uiSetupConnect9600(xEvent_t *pxEvent);
 void uiSetupConnect57600(xEvent_t *pxEvent);
 void uiSetupConnect115200(xEvent_t *pxEvent);
 void uiSetupConnect250000(xEvent_t *pxEvent);
+
 void uiSetupWifi  (xEvent_t *pxEvent);
 void uiSetupAbout (xEvent_t *pxEvent);
 
@@ -159,7 +168,7 @@ __STATIC_INLINE void uiMenuHandleEventDefault(const xMenuItem_t *pMenu, xEvent_t
 				uiDrawMenu(pMenu);
 #if 1
 				char buffer[12];
-				sprintf(buffer, "%05u:%05u", touchX, touchY);
+				sprintf(buffer, "%03u:%03u", touchX, touchY);
 				Lcd_Put_Text(10, LCD_MAX_Y - 9, 8, buffer, 0xffffu);
 #endif
 			}
@@ -170,6 +179,12 @@ __STATIC_INLINE void uiMenuHandleEventDefault(const xMenuItem_t *pMenu, xEvent_t
 			if (pMenu) {
 				eventProcessor_t p = NULL;
 
+#if 0
+				char buffer[12];
+                sprintf(buffer, "%05u:%05u", (pxEvent->ucData.touchXY) >> 16 & 0x7fffu,
+						pxEvent->ucData.touchXY & 0x7fffu);
+                Lcd_Put_Text(80, LCD_MAX_Y - 9, 8, buffer, 0xffffu);
+#endif
 				Lcd_Translate_Touch_Pos((pxEvent->ucData.touchXY) >> 16 & 0x7fffu,
 						pxEvent->ucData.touchXY & 0x7fffu, &touchX, &touchY);
 
@@ -192,6 +207,11 @@ __STATIC_INLINE void uiMenuHandleEventDefault(const xMenuItem_t *pMenu, xEvent_t
 		case UPDATE6_EVENT: uiDrawBinIcon(pMenu[5].pIconFile,  81, 18 + 104, 78, 104, 1); break;
 		case UPDATE7_EVENT: uiDrawBinIcon(pMenu[6].pIconFile, 161, 18 + 104, 78, 104, 1); break;
 		case UPDATE8_EVENT: uiDrawBinIcon(pMenu[7].pIconFile, 241, 18 + 104, 78, 104, 1); break;
+
+		case UPDATE12_EVENT:
+			uiDrawBinIcon(pMenu[0].pIconFile,	1, 16, 78, 104, 0);
+			uiDrawBinIcon(pMenu[1].pIconFile,  81, 16, 78, 104, 1);
+			break;
 
 		case UPDATE14_EVENT:
 			uiDrawBinIcon(pMenu[0].pIconFile,	1, 16, 78, 104, 0);
@@ -298,7 +318,7 @@ void uiMainMenu (xEvent_t *pxEvent) {
 		{ MKS_PIC_FL "/bmp_zero.bin", uiHomeMenu },
 		{ MKS_PIC_FL "/bmp_printing.bin", uiFileBrowse },
 		{ MKS_PIC_FL "/bmp_extruct.bin", uiExtrudeMenu },
-		{ MKS_PIC_FL "/bmp_fan.bin", NULL },
+		{ MKS_PIC_FL "/bmp_fan.bin", uiFanMenu },
 		{ MKS_PIC_FL "/bmp_set.bin", uiSetupMenu },
 		{ MKS_PIC_FL "/bmp_More.bin", uiMoreMenu }
 	};
@@ -309,7 +329,7 @@ void uiMainMenu (xEvent_t *pxEvent) {
 }
 
 static xMenuItem_t setupMenu[8] = {
-	{ MKS_PIC_FL "/bmp_fileSys.bin", NULL },
+	{ MKS_PIC_FL "/bmp_fileSys.bin", uiSetupFilesystemMenu },
 	{ MKS_PIC_FL "/bmp_adj.bin", NULL },
 	{ MKS_PIC_FL "/bmp_wifi.bin", uiSetupWifi },
 	{ MKS_PIC_FL "/bmp_connect.bin", uiSetupConnectMenu },
@@ -352,6 +372,56 @@ void uiSetupMenuOffMode(xEvent_t *pxEvent) {
 
 	processEvent = uiSetupMenu;
 	xEvent_t event = { UPDATE7_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+static xMenuItem_t setupFilesystemMenu[8] = {
+	{ MKS_PIC_FL "/bmp_sd.bin", uiSetupFilesystemSD },
+	{ MKS_PIC_FL "/bmp_usb.bin", uiSetupFilesystemUSB },
+	{ NULL, NULL },
+	{ NULL, NULL },
+	{ NULL, NULL },
+	{ NULL, NULL },
+	{ NULL, NULL },
+	{ MKS_PIC_FL "/bmp_return.bin", uiSetupMenu }
+};
+
+void uiSetupFilesystemMenu (xEvent_t *pxEvent) {
+
+	switch(selectedFs) {
+	case FS_SD:
+		setupFilesystemMenu[0].pIconFile = MKS_PIC_FL "/bmp_sd_sel.bin";
+		setupFilesystemMenu[1].pIconFile = MKS_PIC_FL "/bmp_usb.bin";
+		break;
+
+	default:
+		setupFilesystemMenu[0].pIconFile = MKS_PIC_FL "/bmp_sd.bin";
+		setupFilesystemMenu[1].pIconFile = MKS_PIC_FL "/bmp_usb_sel.bin";
+        break;
+	}
+
+	uiMenuHandleEventDefault(setupFilesystemMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Set>Filesystem", 0xffffu);
+}
+
+void uiSetupFilesystemSD (xEvent_t *pxEvent) {
+    if (INIT_EVENT == pxEvent->ucEventID) {
+        selectedFs = FS_SD;
+    }
+
+    processEvent = uiSetupFilesystemMenu;
+	xEvent_t event = { UPDATE12_EVENT };
+	xQueueSendToFront(xUIEventQueue, &event, 1000);
+}
+
+void uiSetupFilesystemUSB (xEvent_t *pxEvent) {
+    if (INIT_EVENT == pxEvent->ucEventID) {
+        selectedFs = FS_USB;
+    }
+
+    processEvent = uiSetupFilesystemMenu;
+    xEvent_t event = { UPDATE12_EVENT };
 	xQueueSendToFront(xUIEventQueue, &event, 1000);
 }
 
@@ -472,6 +542,24 @@ void uiHomeMenu (xEvent_t *pxEvent) {
 		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Home", 0xffffu);
 }
 
+void uiFanMenu (xEvent_t *pxEvent) {
+
+	static const xMenuItem_t fanMenu[8] = {
+			{ MKS_PIC_FL "/bmp_Add.bin", NULL },
+			{ NULL, NULL },
+			{ NULL, NULL },
+			{ MKS_PIC_FL "/bmp_Dec.bin", NULL },
+			{ MKS_PIC_FL "/bmp_speed_high.bin", NULL },
+			{ MKS_PIC_FL "/bmp_speed_normal.bin", NULL },
+			{ MKS_PIC_FL "/bmp_stop.bin", NULL },
+			{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
+	};
+
+	uiMenuHandleEventDefault(fanMenu, pxEvent);
+	if (INIT_EVENT == pxEvent->ucEventID)
+		Lcd_Put_Text(0, 0, 16, READY_PRINT ">Fan", 0xffffu);
+}
+
 static xMenuItem_t moveMenu[8] = {
 		{ MKS_PIC_FL "/bmp_xAdd.bin", NULL },
 		{ MKS_PIC_FL "/bmp_yAdd.bin", NULL },
@@ -512,7 +600,7 @@ static xMenuItem_t preheatMenu[8] = {
 		{ MKS_PIC_FL "/bmp_Dec.bin", NULL },
 		{ MKS_PIC_FL "/bmp_extru1.bin", uiPreheatSelectDev },
 		{ MKS_PIC_FL "/bmp_step1_degree.bin", uiPreheatSelectStep },
-		{ MKS_PIC_FL "/bmp_manual_off.bin", NULL },
+		{ MKS_PIC_FL "/bmp_stop.bin", NULL },
 		{ MKS_PIC_FL "/bmp_return.bin", uiMainMenu }
 };
 

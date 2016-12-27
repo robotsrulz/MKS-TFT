@@ -59,6 +59,7 @@ typedef struct
 		UPDATE6_EVENT,
 		UPDATE7_EVENT,
 		UPDATE8_EVENT,
+		UPDATE12_EVENT,
 		UPDATE14_EVENT,
     	TOUCH_DOWN_EVENT,
 		TOUCH_UP_EVENT,
@@ -132,6 +133,12 @@ typedef enum {
     SPEED_HIGH
 } xExtrudeSpeed_t;
 extern uint8_t extrudeSelSpeed;
+
+typedef enum {
+    FS_SD = 0,
+    FS_USB
+} xFSSelection_t;
+extern uint8_t selectedFs;
 
 #endif /* __UI_H */
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/

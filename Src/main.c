@@ -586,14 +586,21 @@ void StartTouchHandlerTask(void const * argument) {
 
 				// TODO: continuous gesture recognition here!
 				osDelay(125); // limit touch event rate
-			} else {
-				xEvent_t event;
-				event.ucEventID = TOUCH_UP_EVENT;
-				event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
-				xQueueSendToBack(xUIEventQueue, &event, 1000);
 
-				// TODO: continuous gesture recognition here!
-				osDelay(125);
+			} else {
+
+                if (xTouchX && xTouchY) {
+                    xEvent_t event;
+                    event.ucEventID = TOUCH_UP_EVENT;
+                    event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
+                    xQueueSendToBack(xUIEventQueue, &event, 1000);
+
+                    xTouchX = 0;
+                    xTouchY = 0;
+
+                    // TODO: continuous gesture recognition here!
+                    osDelay(125);
+                }
 			}
 		}
 	}
