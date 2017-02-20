@@ -66,16 +66,20 @@ typedef struct
 		SDCARD_INSERT,
 		SDCARD_REMOVE,
 		USBDRIVE_INSERT,
-		USBDRIVE_REMOVE
+		USBDRIVE_REMOVE,
+		SHOW_STATUS
     } ucEventID;
     union {
     	unsigned int touchXY;
     } ucData;
-} xEvent_t;
+} xUIEvent_t;
 
 extern QueueHandle_t xUIEventQueue;
 
-typedef void (*volatile eventProcessor_t) (xEvent_t *);
+#define MAXSTATSIZE 320/8
+extern uint8_t statString[MAXSTATSIZE+1];
+
+typedef void (*volatile eventProcessor_t) (xUIEvent_t *);
 extern eventProcessor_t processEvent;
 
 typedef enum {

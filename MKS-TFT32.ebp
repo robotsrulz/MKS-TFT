@@ -36,6 +36,11 @@
 				<Linker>
 					<Add option="-Wl,--gc-sections" />
 				</Linker>
+				<ExtraCommands>
+					<Add after='&quot;C:\Program Files (x86)\SEGGER\JLink_V612f\JLink.exe&quot; -if swd -device STM32F107VC -speed 4000 -CommanderScript $(ProjectDir)FlashDebug.jscript' />
+					<Mode before="0" />
+					<Mode after="2" />
+				</ExtraCommands>
 			</Target>
 			<Target title="Release">
 				<Option output="bin\Release\MKS-TFT32.elf" />
@@ -197,6 +202,9 @@
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_usb.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="FlashDebug.jscript">
+			<Option target="Debug" />
+		</Unit>
 		<Unit filename="Inc\eeprom.h" />
 		<Unit filename="Inc\fatfs.h" />
 		<Unit filename="Inc\ffconf.h" />
@@ -304,6 +312,9 @@
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\timers.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="MKS_TFT.jflash">
+			<Option target="Debug" />
+		</Unit>
 		<Unit filename="Src\cp866-8x14.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -323,6 +334,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\serial_io.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\spiflash_w25q16dv.c">
@@ -356,7 +370,15 @@
 		<Extensions>
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="Release" active_interface="ST-link">
+				<target_debugging_settings target="Debug" active_interface="ST-link">
+					<debug_interface interface_id="J-link" ip_address="" ip_port="" path="" executable="" description="" dont_start_server="false" backoff_time="" options="0" reg_filter="0" active_family="" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="Generic">
+							<option opt_id="ID_CMD_BEFORE" opt_value="" />
+							<option opt_id="ID_GDB_SERVER_CL" opt_value="" />
+							<option opt_id="ID_CMD_RESET" opt_value="" />
+							<option opt_id="ID_CMD_AFTER" opt_value="" />
+						</family_options>
+					</debug_interface>
 					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="1000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
@@ -373,7 +395,7 @@
 						</family_options>
 					</debug_interface>
 				</target_debugging_settings>
-				<target_debugging_settings target="Debug" active_interface="ST-link">
+				<target_debugging_settings target="Release" active_interface="ST-link">
 					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="1000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />

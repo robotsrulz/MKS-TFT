@@ -50,6 +50,7 @@ SPI_HandleTypeDef hspi3;
 
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 TIM_HandleTypeDef htim2;
 
@@ -65,12 +66,19 @@ static osThreadId sdcardHandlerHandle;	// sd card insert/remove
 QueueHandle_t xUIEventQueue;
 QueueHandle_t xPCommEventQueue;
 
+#define MAXCOMM1SIZE    0xff                // Biggest string the user will type
+static uint8_t comm1RxBuffer = '\000';      // where we store that one character that just came in
+static uint8_t comm1RxString[MAXCOMM1SIZE]; // where we build our string from characters coming in
+static int comm1RxIndex = 0;                // index for going though comm1RxString
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Error_Handler(void);
+
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
@@ -92,6 +100,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 /* USER CODE BEGIN 0 */
 static SemaphoreHandle_t xTouchSemaphore;
 static SemaphoreHandle_t xSDSemaphore;
+static SemaphoreHandle_t xComm1Semaphore;
+static SemaphoreHandle_t xComm2Semaphore;
 /* USER CODE END 0 */
 
 int main(void)
@@ -110,6 +120,7 @@ int main(void)
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
+    MX_DMA_Init();
 	MX_TIM2_Init();
 	MX_I2C1_Init();
 	MX_SPI1_Init();
@@ -128,7 +139,9 @@ int main(void)
 	/* USER CODE BEGIN RTOS_SEMAPHORES */
 	/* add semaphores, ... */
 	xTouchSemaphore = xSemaphoreCreateBinary();
-	xSDSemaphore = xSemaphoreCreateBinary();
+	xSDSemaphore    = xSemaphoreCreateBinary();
+	xComm1Semaphore = xSemaphoreCreateBinary();
+	xComm2Semaphore = xSemaphoreCreateBinary();
 	/* USER CODE END RTOS_SEMAPHORES */
 
 	/* USER CODE BEGIN RTOS_TIMERS */
@@ -158,12 +171,12 @@ int main(void)
 
 	/* USER CODE BEGIN RTOS_QUEUES */
 	/* add queues, ... */
-	xUIEventQueue = xQueueCreate(1, sizeof(xEvent_t));
+	xUIEventQueue = xQueueCreate(1, sizeof(xUIEvent_t));
 	if (xUIEventQueue == NULL) {
 		/* Queue was not created and must not be used. */
 	}
 
-	xPCommEventQueue = xQueueCreate(10, sizeof(xEvent_t));
+	xPCommEventQueue = xQueueCreate(10, sizeof(xUIEvent_t));
 	if (xPCommEventQueue == NULL) {
 		/* Queue was not created and must not be used. */
 	}
@@ -339,6 +352,20 @@ static void MX_USART3_UART_Init(void)
     Error_Handler();
   }
 
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 }
 
 /** Configure pins as
@@ -576,7 +603,7 @@ void StartTouchHandlerTask(void const * argument) {
 
 				HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_SET);
 
-				xEvent_t event;
+				xUIEvent_t event;
 				event.ucEventID = TOUCH_DOWN_EVENT;
 
 				xTouchX = Lcd_Touch_Get_Closest_Average(x);
@@ -590,7 +617,7 @@ void StartTouchHandlerTask(void const * argument) {
 			} else {
 
                 if (xTouchX && xTouchY) {
-                    xEvent_t event;
+                    xUIEvent_t event;
                     event.ucEventID = TOUCH_UP_EVENT;
                     event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
                     xQueueSendToBack(xUIEventQueue, &event, 1000);
@@ -614,7 +641,7 @@ void StartSDHandlerTask(void const * argument) {
 
 			osDelay(100);
 
-			xEvent_t event;
+			xUIEvent_t event;
 			event.ucEventID =
 					(HAL_GPIO_ReadPin(SDCARD_DETECT_GPIO_Port, SDCARD_DETECT_Pin)
 							== GPIO_PIN_RESET) ? SDCARD_INSERT : SDCARD_REMOVE;
@@ -625,8 +652,24 @@ void StartSDHandlerTask(void const * argument) {
 
 void StartComm1Task(void const * argument) {
 
+    __HAL_UART_FLUSH_DRREGISTER(&huart2);
+    HAL_UART_Receive_DMA(&huart2, &comm1RxBuffer, 1);
+
 	while (1) {
-		osDelay(1);
+	    if(xSemaphoreTake(xComm1Semaphore, 5000 /* FIXME */ ) == pdTRUE ) {
+
+            xUIEvent_t event;
+			event.ucEventID = SHOW_STATUS;
+			xQueueSendToBack(xUIEventQueue, &event, 1000);
+	    }
+        else
+        {
+            // osDelay(1);
+            static const char m115[] = "M115";
+
+            HAL_UART_Transmit(&huart2, m115, /* sizeof(m115)*/ 4, 1000);
+            osDelay(20);
+        }
 	}
 }
 
@@ -637,6 +680,39 @@ void StartComm2Task(void const * argument) {
 	}
 }
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance == USART2)
+	{
+        __HAL_UART_FLUSH_DRREGISTER(&huart2); // Clear the buffer to prevent overrun
+
+        int i = 0;
+
+        if (comm1RxBuffer == '\n' || comm1RxBuffer == '\r') // If Enter
+        {
+            snprintf(statString, MAXSTATSIZE, "%s", comm1RxString);
+
+
+            comm1RxString[comm1RxIndex] = 0;
+            comm1RxIndex = 0;
+            for (i = 0; i < MAXSTATSIZE; i++) comm1RxString[i] = 0; // Clear the string buffer
+
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+            xSemaphoreGiveFromISR(xComm1Semaphore, &xHigherPriorityTaskWoken);
+        }
+        else
+        {
+            comm1RxString[comm1RxIndex] = comm1RxBuffer; // Add that character to the string
+            comm1RxIndex++;
+            if (comm1RxIndex > MAXSTATSIZE) // User typing too much, we can't have commands that big
+            {
+                comm1RxIndex = 0;
+                for (i = 0; i < MAXSTATSIZE; i++) comm1RxString[i] = 0; // Clear the string buffer
+            }
+        }
+	    //
+	}
+}
 /* USER CODE END 4 */
 
 /* StartUITask function */
@@ -653,7 +729,7 @@ void StartUITask(void const * argument) {
 	osDelay(50);
 	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
 
-	xEvent_t event;
+	xUIEvent_t event;
 	event.ucEventID = INIT_EVENT;
 	(*processEvent) (&event);
 
@@ -662,7 +738,7 @@ void StartUITask(void const * argument) {
 	for (;;) {
 		if (xUIEventQueue != 0) {
 
-			xEvent_t event;
+			xUIEvent_t event;
 
 			if (xQueueReceive(xUIEventQueue, &event, (TickType_t ) 500)) {
 
