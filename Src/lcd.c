@@ -328,13 +328,21 @@ void Lcd_Render_Bitmap_8xN(uint16_t x, uint16_t y, uint8_t height, uint8_t *bitm
     }
 }
 
+__STATIC_INLINE char _R( const char c ) {
+    if ((uint8_t) c > 239)
+            return (char) ((uint8_t) c - 16);
+    if ((uint8_t) c > 191)
+            return (char) ((uint8_t) c - 64);
+    return c;
+}
+
 void Lcd_Put_Text(uint16_t x, uint16_t y, uint8_t height, char *text, uint16_t color) {
 
 	uint8_t *bitmap;
 
 	for(; *text; x += 8, text++) {
 
-		int idx = *(uint8_t *)text;
+		int idx = _R(* (uint8_t *) text);
 
 		switch (height) {
 		case 14: bitmap = cp866_8x14_psf[idx]; break;
