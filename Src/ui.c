@@ -282,9 +282,6 @@ void uiSetupMenu (xUIEvent_t *pxEvent) {
         { 85,  20, 160, 80, Lcd_Get_RGB565(31, 20, 10), "ДВ Off", NULL },
         { 165, 20, 240, 80, Lcd_Get_RGB565(31, 20, 10), "Ст. вниз", NULL },
         { 245, 20, 315, 80, Lcd_Get_RGB565(31, 20, 10), "Парк XY", NULL },
-        { 20, 100, 300, 130, Lcd_Get_RGB565(0, 0, 0), "Текущий IP: 192.168.0.253", NULL },
-        { 20, 150, 130, 210, Lcd_Get_RGB565(10, 20, 31), "Пруток", NULL },
-        { 150, 150, 300, 210, Lcd_Get_RGB565(10, 20, 31), "Движение по осям", NULL },
     };
 
 	uiMenuHandleEventDefault(menu, sizeof(menu)/sizeof(xButton_t), pxEvent);
