@@ -659,15 +659,15 @@ void StartComm1Task(void const * argument) {
 	    if(xSemaphoreTake(xComm1Semaphore, 5000 /* FIXME */ ) == pdTRUE ) {
 
             xUIEvent_t event;
-			event.ucEventID = SHOW_STATUS;
-			xQueueSendToBack(xUIEventQueue, &event, 1000);
-	    }
+            event.ucEventID = SHOW_STATUS;
+            xQueueSendToBack(xUIEventQueue, &event, 1000);
+ 	    }
         else
         {
             // osDelay(1);
-            static const char m115[] = "M115";
+            static const char m115[] = "M119\n";
 
-            HAL_UART_Transmit(&huart2, m115, /* sizeof(m115)*/ 4, 1000);
+            HAL_UART_Transmit(&huart2, m115, /* sizeof(m115)*/ 5, 1000);
             osDelay(20);
         }
 	}
@@ -690,8 +690,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
         if (comm1RxBuffer == '\n' || comm1RxBuffer == '\r') // If Enter
         {
-            snprintf(statString, MAXSTATSIZE, "%s", comm1RxString);
-
+            if (comm1RxString[0] != 'o' || comm1RxString[1] != 'k') {
+                snprintf(statString, MAXSTATSIZE, "%s", comm1RxString);
+            }
 
             comm1RxString[comm1RxIndex] = 0;
             comm1RxIndex = 0;
