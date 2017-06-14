@@ -38,3 +38,5 @@
 *.depend
 *.elay
 .settings
+MKS-TFT32.ioc
+*.html

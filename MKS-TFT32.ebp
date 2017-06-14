@@ -15,6 +15,7 @@
 				<Option compiler="armgcc_eb" />
 				<Option projectDeviceOptionsRelation="0" />
 				<Compiler>
+					<Add option="-std=c11" />
 					<Add option="-Wall" />
 					<Add option="-funroll-loops" />
 					<Add option="-fdata-sections" />
@@ -24,6 +25,7 @@
 					<Add symbol="STM32F107xC" />
 				</Compiler>
 				<Cpp>
+					<Add option="-std=c++11" />
 					<Add option="-Wall" />
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
@@ -34,12 +36,14 @@
 					<Add option="-Wa,--gdwarf-2" />
 				</Assembler>
 				<Linker>
+					<Add option="-u _scanf_float" />
+					<Add option="-u _printf_float" />
 					<Add option="-Wl,--gc-sections" />
 				</Linker>
 				<ExtraCommands>
 					<Add after='&quot;C:\Program Files (x86)\SEGGER\JLink_V612f\JLink.exe&quot; -if swd -device STM32F107VC -speed 4000 -CommanderScript $(ProjectDir)FlashDebug.jscript' />
 					<Mode before="0" />
-					<Mode after="2" />
+					<Mode after="0" />
 				</ExtraCommands>
 			</Target>
 			<Target title="Release">
@@ -50,23 +54,25 @@
 				<Option compiler="armgcc_eb" />
 				<Option projectDeviceOptionsRelation="0" />
 				<Compiler>
+					<Add option="-std=c11" />
 					<Add option="-funroll-loops" />
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
 					<Add option="-Os" />
-					<Add option="-g2" />
 					<Add symbol="STM32F107xC" />
 				</Compiler>
 				<Cpp>
+					<Add option="-std=c++11" />
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
 					<Add option="-O2" />
-					<Add option="-g2" />
 				</Cpp>
 				<Assembler>
 					<Add option="-Wa,--no-warn" />
 				</Assembler>
 				<Linker>
+					<Add option="-u _scanf_float" />
+					<Add option="-u _printf_float" />
 					<Add option="-Wl,--gc-sections" />
 				</Linker>
 			</Target>
@@ -75,15 +81,15 @@
 			<Add option="$device=cortex-m3" />
 			<Add option="$stack=0x0100" />
 			<Add option="$heap=0x0200" />
-			<Add option="$lscript=./stm32f107vc_flash.ld" />
+			<Add option="$lscript=./STM32F107VC_FLASH.ld" />
 		</Device>
 		<Compiler>
 			<Add option="-mfloat-abi=soft" />
 			<Add option="-fno-strict-aliasing" />
 			<Add symbol="STM32F107VC" />
 			<Add symbol="STM32F10X_CL" />
-			<Add directory=".\inc" />
-			<Add directory=".\src" />
+			<Add directory=".\Inc" />
+			<Add directory=".\Src" />
 			<Add directory=".\cmsis" />
 		</Compiler>
 		<Linker>
@@ -205,20 +211,35 @@
 		<Unit filename="FlashDebug.jscript">
 			<Option target="Debug" />
 		</Unit>
+		<Unit filename="Icons\HomeIcons.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Icons\Icons.h" />
+		<Unit filename="Icons\KeyIcons.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Icons\MiscIcons.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Icons\NozzleIcons.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Inc\ecv.h" />
 		<Unit filename="Inc\eeprom.h" />
+		<Unit filename="Inc\events.h" />
 		<Unit filename="Inc\fatfs.h" />
 		<Unit filename="Inc\ffconf.h" />
 		<Unit filename="Inc\FreeRTOSConfig.h" />
-		<Unit filename="Inc\lcd.h" />
-		<Unit filename="Inc\mxconstants.h" />
+		<Unit filename="Inc\mks_conf.h" />
+		<Unit filename="Inc\Print.h" />
 		<Unit filename="Inc\spiflash_w25q16dv.h" />
 		<Unit filename="Inc\spisd_diskio.h" />
 		<Unit filename="Inc\stm32f1xx_hal_conf.h" />
 		<Unit filename="Inc\stm32f1xx_it.h" />
-		<Unit filename="Inc\ui.h" />
 		<Unit filename="Inc\usb_host.h" />
 		<Unit filename="Inc\usbh_conf.h" />
 		<Unit filename="Inc\usbh_diskio.h" />
+		<Unit filename="Inc\UTFT.h" />
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc.h" />
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_bot.h" />
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_scsi.h" />
@@ -315,25 +336,16 @@
 		<Unit filename="MKS_TFT.jflash">
 			<Option target="Debug" />
 		</Unit>
-		<Unit filename="Src\cp866-8x14.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\cp866-8x16.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Src\cp866-8x8.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="Src\eeprom.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\fatfs.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="Src\lcd.c">
+		<Unit filename="Src\main.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="Src\main.c">
+		<Unit filename="Src\Print.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\serial_io.c">
@@ -354,9 +366,6 @@
 		<Unit filename="Src\stm32f1xx_it.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="Src\ui.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="Src\usb_host.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -364,6 +373,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\usbh_diskio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\UTFT.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="STM32F107VC_FLASH.ld" />

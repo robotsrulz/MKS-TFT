@@ -37,8 +37,7 @@
 #include "usb_host.h"
 
 /* USER CODE BEGIN Includes */
-#include "lcd.h"
-#include "ui.h"
+#include "mks_conf.h"
 
 /* USER CODE END Includes */
 
@@ -66,10 +65,10 @@ static osThreadId sdcardHandlerHandle;	// sd card insert/remove
 QueueHandle_t xUIEventQueue;
 QueueHandle_t xPCommEventQueue;
 
-#define MAXCOMM1SIZE    0xff                // Biggest string the user will type
+#define MAXCOMM1SIZE    0xffu                // Biggest string the user will type
 static uint8_t comm1RxBuffer = '\000';      // where we store that one character that just came in
-static uint8_t comm1RxString[MAXCOMM1SIZE]; // where we build our string from characters coming in
-static int comm1RxIndex = 0;                // index for going though comm1RxString
+static volatile uint8_t comm1RxString[MAXCOMM1SIZE + 1]; // where we build our string from characters coming in
+static volatile int comm1RxIndex = 0;                // index for going though comm1RxString
 
 /* USER CODE END PV */
 
@@ -106,13 +105,6 @@ static SemaphoreHandle_t xComm2Semaphore;
 
 int main(void)
 {
-	/* USER CODE BEGIN 1 */
-
-	/* USER CODE END 1 */
-
-	/* MCU Configuration----------------------------------------------------------*/
-
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
 
 	/* Configure the system clock */
@@ -128,31 +120,14 @@ int main(void)
 	MX_USART2_UART_Init();
 	MX_USART3_UART_Init();
 
-	/* USER CODE BEGIN 2 */
+	MX_FATFS_Init();
+	MX_USB_HOST_Init();
 
-	/* USER CODE END 2 */
-
-	/* USER CODE BEGIN RTOS_MUTEX */
-	/* add mutexes, ... */
-	/* USER CODE END RTOS_MUTEX */
-
-	/* USER CODE BEGIN RTOS_SEMAPHORES */
-	/* add semaphores, ... */
 	xTouchSemaphore = xSemaphoreCreateBinary();
 	xSDSemaphore    = xSemaphoreCreateBinary();
 	xComm1Semaphore = xSemaphoreCreateBinary();
 	xComm2Semaphore = xSemaphoreCreateBinary();
-	/* USER CODE END RTOS_SEMAPHORES */
 
-	/* USER CODE BEGIN RTOS_TIMERS */
-	/* start timers, add new ones, ... */
-	/* USER CODE END RTOS_TIMERS */
-
-	/* Create the thread(s) */
-	/* definition and creation of uiTask */
-
-	/* USER CODE BEGIN RTOS_THREADS */
-	/* add threads, ... */
 	osThreadDef(touchHandlerTask, StartTouchHandlerTask, osPriorityNormal, 0, 128);
 	touchHandlerHandle = osThreadCreate(osThread(touchHandlerTask), NULL);
 
@@ -167,35 +142,19 @@ int main(void)
 
 	osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 14 * 1024 / 4);
 	uiTaskHandlerHandle = osThreadCreate(osThread(uiTask), NULL);
-	/* USER CODE END RTOS_THREADS */
 
-	/* USER CODE BEGIN RTOS_QUEUES */
-	/* add queues, ... */
-	xUIEventQueue = xQueueCreate(1, sizeof(xUIEvent_t));
-	if (xUIEventQueue == NULL) {
-		/* Queue was not created and must not be used. */
-	}
+//	xUIEventQueue = xQueueCreate(UI_QUEUE_SIZE, sizeof(xUIEvent_t));
+//	if (xUIEventQueue == NULL) {
+//		/* Queue was not created and must not be used. */
+//	}
+//
+//	xPCommEventQueue = xQueueCreate(COMM_QUEUE_SIZE, sizeof(xCommEvent_t));
+//	if (xPCommEventQueue == NULL) {
+//		/* Queue was not created and must not be used. */
+//	}
 
-	xPCommEventQueue = xQueueCreate(10, sizeof(xUIEvent_t));
-	if (xPCommEventQueue == NULL) {
-		/* Queue was not created and must not be used. */
-	}
-	/* USER CODE END RTOS_QUEUES */
-
-	/* Start scheduler */
 	osKernelStart();
-
-	/* We should never get here as control is now taken by the scheduler */
-
-	/* Infinite loop */
-	/* USER CODE BEGIN WHILE */
-	while (1) {
-		/* USER CODE END WHILE */
-
-		/* USER CODE BEGIN 3 */
-
-	}
-	/* USER CODE END 3 */
+	while (1) {}
 }
 
 /** System Clock Configuration
@@ -267,7 +226,6 @@ static void MX_I2C1_Init(void)
   {
     Error_Handler();
   }
-
 }
 
 /* SPI1 init function */
@@ -290,7 +248,6 @@ static void MX_SPI1_Init(void)
   {
     Error_Handler();
   }
-
 }
 
 /* SPI3 init function */
@@ -313,7 +270,6 @@ static void MX_SPI3_Init(void)
   {
     Error_Handler();
   }
-
 }
 
 /* USART2 init function */
@@ -332,7 +288,6 @@ static void MX_USART2_UART_Init(void)
   {
     Error_Handler();
   }
-
 }
 
 /* USART3 init function */
@@ -351,7 +306,6 @@ static void MX_USART3_UART_Init(void)
   {
     Error_Handler();
   }
-
 }
 
 /**
@@ -534,6 +488,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	case TOUCH_DI_Pin:
 		xSemaphoreGiveFromISR(xTouchSemaphore, &xHigherPriorityTaskWoken);
 		break;
+
 	case SDCARD_DETECT_Pin:
 		xSemaphoreGiveFromISR(xSDSemaphore, &xHigherPriorityTaskWoken);
 		break;
@@ -557,10 +512,11 @@ void StartTouchHandlerTask(void const * argument) {
 
 	while (1) {
 
-		if(xSemaphoreTake(xTouchSemaphore, portMAX_DELAY ) == pdTRUE ) {
+		/* if(xSemaphoreTake(xTouchSemaphore, portMAX_DELAY ) == pdTRUE ) */ {
 
-			osDelay(1);
-			if (HAL_GPIO_ReadPin(TOUCH_DI_GPIO_Port, TOUCH_DI_Pin) == GPIO_PIN_RESET) {
+			osDelay(10);
+
+			while (HAL_GPIO_ReadPin(TOUCH_DI_GPIO_Port, TOUCH_DI_Pin) == GPIO_PIN_RESET) {
 
 				/*
 				 * datasheet: https://ldm-systems.ru/f/doc/catalog/HY-TFT-2,8/XPT2046.pdf
@@ -569,25 +525,10 @@ void StartTouchHandlerTask(void const * argument) {
 				 *	http://e2e.ti.com/support/other_analog/touch/f/750/t/202636
 				 * */
 
-				uint16_t x[3], y[3], i;
-
 				HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_RESET);
 
-				if (0) {
-					for (i = 0; i < 3; i++) {
-						pTxData[0] = /* i < 2 ? 0xd7 : */0xd4;
-						HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3,
-								1000);
-						y[i] = (unsigned int) (pRxData[1] << 8) + pRxData[2];
-					}
+				uint16_t x[3], y[3], i;
 
-					for (i = 0; i < 3; i++) {
-						pTxData[0] = /* i < 2 ? 0x97 : */0x94;
-						HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3,
-								1000);
-						x[i] = (unsigned int) (pRxData[1] << 8) + pRxData[2];
-					}
-				} else {
 					for (i = 0; i < 3; i++) {
 						pTxData[0] = /* i < 2 ? 0xd7 : */0xd4;
 						HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3,
@@ -599,28 +540,26 @@ void StartTouchHandlerTask(void const * argument) {
 								1000);
 						x[i] = (unsigned int) (pRxData[1] << 8) + pRxData[2];
 					}
-				}
 
 				HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_SET);
 
-				xUIEvent_t event;
-				event.ucEventID = TOUCH_DOWN_EVENT;
+//				xTouchX = Lcd_Touch_Get_Closest_Average(x);
+//				xTouchY = Lcd_Touch_Get_Closest_Average(y);
 
-				xTouchX = Lcd_Touch_Get_Closest_Average(x);
-				xTouchY = Lcd_Touch_Get_Closest_Average(y);
-				event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
-				xQueueSendToBack(xUIEventQueue, &event, 1000);
+//				xUIEvent_t event;
+//				event.ucEventID = TOUCH_DOWN_EVENT;
 
-				// TODO: continuous gesture recognition here!
+//				event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
+//				xQueueSendToBack(xUIEventQueue, &event, UI_QUEUE_TIMEOUT);
+
 				osDelay(125); // limit touch event rate
-
-			} else {
+			}
 
                 if (xTouchX && xTouchY) {
-                    xUIEvent_t event;
-                    event.ucEventID = TOUCH_UP_EVENT;
-                    event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
-                    xQueueSendToBack(xUIEventQueue, &event, 1000);
+//                    xUIEvent_t event;
+//                    event.ucEventID = TOUCH_UP_EVENT;
+//                    event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
+//                    xQueueSendToBack(xUIEventQueue, &event, UI_QUEUE_TIMEOUT);
 
                     xTouchX = 0;
                     xTouchY = 0;
@@ -630,7 +569,6 @@ void StartTouchHandlerTask(void const * argument) {
                 }
 			}
 		}
-	}
 }
 
 void StartSDHandlerTask(void const * argument) {
@@ -641,11 +579,11 @@ void StartSDHandlerTask(void const * argument) {
 
 			osDelay(100);
 
-			xUIEvent_t event;
-			event.ucEventID =
-					(HAL_GPIO_ReadPin(SDCARD_DETECT_GPIO_Port, SDCARD_DETECT_Pin)
-							== GPIO_PIN_RESET) ? SDCARD_INSERT : SDCARD_REMOVE;
-			xQueueSendToBack(xUIEventQueue, &event, 1000);
+//			xUIEvent_t event;
+//			event.ucEventID =
+//					(HAL_GPIO_ReadPin(SDCARD_DETECT_GPIO_Port, SDCARD_DETECT_Pin)
+//							== GPIO_PIN_RESET) ? SDCARD_INSERT : SDCARD_REMOVE;
+//			xQueueSendToBack(xUIEventQueue, &event, UI_QUEUE_TIMEOUT);
 		}
 	}
 }
@@ -656,20 +594,14 @@ void StartComm1Task(void const * argument) {
     HAL_UART_Receive_DMA(&huart2, &comm1RxBuffer, 1);
 
 	while (1) {
-	    if(xSemaphoreTake(xComm1Semaphore, 5000 /* FIXME */ ) == pdTRUE ) {
 
-            xUIEvent_t event;
-            event.ucEventID = SHOW_STATUS;
-            xQueueSendToBack(xUIEventQueue, &event, 1000);
+   		if (xPCommEventQueue != 0) {
+
+//			xCommEvent_t event;
+//			BaseType_t hasEvent = xQueueReceive(xPCommEventQueue, &event, (TickType_t ) 0);
+
+            osDelay(1);
  	    }
-        else
-        {
-            // osDelay(1);
-            static const char m115[] = "M119\n";
-
-            HAL_UART_Transmit(&huart2, m115, /* sizeof(m115)*/ 5, 1000);
-            osDelay(20);
-        }
 	}
 }
 
@@ -685,19 +617,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	if (huart->Instance == USART2)
 	{
         __HAL_UART_FLUSH_DRREGISTER(&huart2); // Clear the buffer to prevent overrun
-
+/*
         int i = 0;
 
         if (comm1RxBuffer == '\n' || comm1RxBuffer == '\r') // If Enter
         {
-            if (comm1RxString[0] != 'o' || comm1RxString[1] != 'k') {
-                snprintf(statString, MAXSTATSIZE, "%s", comm1RxString);
-            }
-
             comm1RxString[comm1RxIndex] = 0;
             comm1RxIndex = 0;
-            for (i = 0; i < MAXSTATSIZE; i++) comm1RxString[i] = 0; // Clear the string buffer
 
+//            strncpy(comm1RxBuf, comm1RxString, MAX_STRING_SIZE);
             BaseType_t xHigherPriorityTaskWoken = pdFALSE;
             xSemaphoreGiveFromISR(xComm1Semaphore, &xHigherPriorityTaskWoken);
         }
@@ -705,50 +633,43 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         {
             comm1RxString[comm1RxIndex] = comm1RxBuffer; // Add that character to the string
             comm1RxIndex++;
-            if (comm1RxIndex > MAXSTATSIZE) // User typing too much, we can't have commands that big
+
+            if (comm1RxIndex >= MAX_STRING_SIZE) // User typing too much, we can't have commands that big
             {
                 comm1RxIndex = 0;
-                for (i = 0; i < MAXSTATSIZE; i++) comm1RxString[i] = 0; // Clear the string buffer
+                for (i = 0; i < MAX_STRING_SIZE; i++) comm1RxString[i] = 0; // Clear the string buffer
             }
         }
-	    //
+*/
 	}
 }
 /* USER CODE END 4 */
 
 /* StartUITask function */
 void StartUITask(void const * argument) {
-	/* init code for FATFS */
-	MX_FATFS_Init();
-
-	/* init code for USB_HOST */
-	MX_USB_HOST_Init();
-
-	/* USER CODE BEGIN 5 */
 
 	HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
 	osDelay(50);
 	HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
 
-	xUIEvent_t event;
-	event.ucEventID = INIT_EVENT;
-	(*processEvent) (&event);
+//	xUIEvent_t event;
+//	event.ucEventID = INIT_EVENT;
+// 	(*processEvent) (&event);
 
 
 	/* Infinite loop */
 	for (;;) {
 		if (xUIEventQueue != 0) {
 
-			xUIEvent_t event;
+//			xUIEvent_t event;
+//			if (xQueueReceive(xUIEventQueue, &event, (TickType_t ) 500)) {
 
-			if (xQueueReceive(xUIEventQueue, &event, (TickType_t ) 500)) {
-
-				(*processEvent) (&event);
-			} else {
+//				(*processEvent) (&event);
+//			} else {
 				/*
 				 * No events received
 				 * */
-			}
+//			}
 		}
 	}
 	/* USER CODE END 5 */

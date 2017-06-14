@@ -32,7 +32,7 @@
   */
 
 #include "fatfs.h"
-#include "mxconstants.h"
+#include "mks_conf.h"
 
 char SPISD_Path[4];  /* USER logical drive path */
 char SPIFL_Path[4];	/* SPI Flash logical drive path */
@@ -98,9 +98,9 @@ FRESULT transferFile(const TCHAR *source, const TCHAR *dest, uint8_t overwrite) 
 
 /* USER CODE BEGIN Variables */
 
-/* USER CODE END Variables */    
+/* USER CODE END Variables */
 
-void MX_FATFS_Init(void) 
+void MX_FATFS_Init(void)
 {
   /*## FatFS: Link the USER driver ###########################*/
   FATFS_LinkDriver(&SPIFLASH_Driver, SPIFL_Path);	// 0:/
@@ -108,12 +108,12 @@ void MX_FATFS_Init(void)
   FATFS_LinkDriver(&USBH_Driver, USBH_Path);		// 2:/
 
   /* USER CODE BEGIN Init */
-  /* additional user code for init */     
+  /* additional user code for init */
   /* USER CODE END Init */
 }
 
 /**
-  * @brief  Gets Time from RTC 
+  * @brief  Gets Time from RTC
   * @param  None
   * @retval Time in DWORD
   */
@@ -121,11 +121,11 @@ DWORD get_fattime(void)
 {
   /* USER CODE BEGIN get_fattime */
   return 0;
-  /* USER CODE END get_fattime */  
+  /* USER CODE END get_fattime */
 }
 
 /* USER CODE BEGIN Application */
-     
+
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
