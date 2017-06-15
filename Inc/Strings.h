@@ -114,7 +114,7 @@ const StringTable LanguageTables[4] =
 		"Active" THIN_SPACE DEGREE_SYMBOL "C",
 		"Standby" THIN_SPACE DEGREE_SYMBOL "C",
 		"Move",
-		"Extrusion",
+		"Extrude",
 		"Macro",
 		"STOP",
 

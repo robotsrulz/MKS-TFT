@@ -62,9 +62,7 @@ enum DisplayOrientation {
 	InvertBitmap = 0x10,
 
 	Portrait = Default,
-	Landscape = SwapXY | ReverseY | InvertBitmap,
-	InvPortrait = ReverseX | ReverseY | InvertText | InvertBitmap,
-	InvLandscape = SwapXY | ReverseX | InvertText
+	Landscape = SwapXY | ReverseY
 };
 
 #define DISPLAY_X				(320)

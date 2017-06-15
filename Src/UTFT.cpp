@@ -339,12 +339,12 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 			y2 = p_x2;
 		}
 
-		if (orient & ReverseY)
+		/*if (orient & ReverseY)
 		{
 			x2 = disp_y_size - p_y1;
 			x1 = disp_y_size - p_y2;
 		}
-		else
+		else */
 		{
 			x1 = p_y1;
 			x2 = p_y2;

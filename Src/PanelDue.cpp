@@ -44,7 +44,7 @@
 
 const uint32_t DefaultBaudRate = 57600;
 
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation> (SwapXY | ReverseY);
+const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation> (Landscape);
 const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation> (Default);
 
 // Controlling constants

@@ -24,16 +24,16 @@ const size_t NumColourSchemes = 2;
 const unsigned int maxHeaters = 5;
 #define MAX_AXES	(3)
 
-const PixelNumber margin = 2;
+const PixelNumber margin = 1;
 const PixelNumber textButtonMargin = 1;
 const PixelNumber iconButtonMargin = 1;
 const PixelNumber outlinePixels = 2;
-const PixelNumber fieldSpacing = 6;
+const PixelNumber fieldSpacing = 4;
 const PixelNumber statusFieldWidth = 156;
 const PixelNumber bedColumn = 114;
 
 const PixelNumber rowTextHeight = 21;	// height of the font we use
-const PixelNumber rowHeight = 28;
+const PixelNumber rowHeight = 27;
 const PixelNumber moveButtonRowSpacing = 12;
 const PixelNumber extrudeButtonRowSpacing = 12;
 const PixelNumber fileButtonRowSpacing = 8;
@@ -53,7 +53,7 @@ const PixelNumber keyboardTopMargin = 8;
 
 const PixelNumber popupFieldSpacing = 10;
 
-const PixelNumber axisLabelWidth = 26;
+const PixelNumber axisLabelWidth = 24;
 const PixelNumber firstMessageRow = margin + rowHeight + 3;		// adjust this to get a whole number of message rows below the keyboard
 
 const PixelNumber progressBarHeight = 10;
@@ -73,13 +73,13 @@ const PixelNumber row3 = row2 + rowHeight;
 const PixelNumber row4 = row3 + rowHeight;
 const PixelNumber row5 = row4 + rowHeight;
 const PixelNumber row6 = row5 + rowHeight;
-const PixelNumber row6p3 = row6 + (rowHeight/3);
+const PixelNumber row6p3 = row6 /* + (rowHeight/6) */;
 const PixelNumber row7 = row6 + rowHeight;
-const PixelNumber row7p7 = row7 + ((2 * rowHeight)/3);
+const PixelNumber row7p7 = row7 + 1;
 const PixelNumber row8 = row7 + rowHeight;
-const PixelNumber row8p7 = row8 + ((2 * rowHeight)/3);
+const PixelNumber row8p7 = row8 + 2;
 const PixelNumber row9 = row8 + rowHeight;
-const PixelNumber rowTabs = DISPLAY_Y - rowTextHeight;			// place at bottom of screen with no margin
+const PixelNumber rowTabs = DISPLAY_Y - rowTextHeight - 2;			// place at bottom of screen with no margin
 const PixelNumber labelRowAdjust = 2;							// how much to drop non-button fields to line up with buttons
 
 const PixelNumber speedColumn = margin;
