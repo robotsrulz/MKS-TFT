@@ -59,10 +59,10 @@ const PixelNumber firstMessageRow = margin + rowHeight + 3;		// adjust this to g
 const PixelNumber progressBarHeight = 10;
 const PixelNumber closeButtonWidth = 40;
 
-const PixelNumber touchCalibMargin = 15;
+const PixelNumber touchCalibMargin = 6;
 
-extern uint8_t glcd19x21[];				// declare which fonts we will be using
 #define DEFAULT_FONT	glcd19x21
+extern const uint8_t DEFAULT_FONT[]; 				// declare which fonts we will be using
 
 const PixelNumber buttonHeight = rowTextHeight + 4;
 const PixelNumber tempButtonWidth = (DISPLAY_X + fieldSpacing - bedColumn)/maxHeaters - fieldSpacing;

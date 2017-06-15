@@ -33,7 +33,7 @@ StaticTextField *touchCalibInstruction, *debugField;
 StaticTextField *messageTextFields[numMessageRows], *messageTimeFields[numMessageRows];
 
 // Private fields
-static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *volumePopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
+static PopupWindow *setTempPopup, *movePopup, *extrudePopup, *fileListPopup, *filePopup, *baudPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup;
 static SingleButton *scrollFilesLeftButton, *scrollFilesRightButton, *filesUpButton, *changeCardButton;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField, *macroPopupTitleField;
 static DisplayField *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
@@ -50,7 +50,7 @@ static TextField *fpNameField, *fpGeneratedByField;
 static StaticTextField *moveAxisRows[MAX_AXES];
 static StaticTextField *nameField, *statusField, *settingsNotSavedField;
 static IntegerButton *activeTemps[maxHeaters], *standbyTemps[maxHeaters];
-static IntegerButton *spd, *extrusionFactors[maxHeaters - 1], *fanSpeed, *baudRateButton, *volumeButton;
+static IntegerButton *spd, *extrusionFactors[maxHeaters - 1], *fanSpeed, *baudRateButton;
 static TextButton *languageButton, *coloursButton;
 static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *alertPopup, *babystepPopup;
@@ -216,17 +216,6 @@ const char * array StripPrefix(const char * array dir)
 		}
 	}
 	return dir;
-}
-
-// Adjust the brightness
-void ChangeBrightness(bool up)
-{
-	int adjust = max<int>(1, GetBrightness()/16);
-	if (!up)
-	{
-		adjust = -adjust;
-	}
-	SetBrightness(GetBrightness() + adjust);
 }
 
 // Update an integer field, provided it isn't the one being adjusted
@@ -727,16 +716,12 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	baudRateButton = AddIntegerButton(row4, 0, 3, nullptr, " baud", evSetBaudRate);
 	baudRateButton->SetValue(GetBaudRate());
-	volumeButton = AddIntegerButton(row4, 1, 3, strings->volume, nullptr, evSetVolume);
-	volumeButton->SetValue(GetVolume());
 	languageButton = AddTextButton(row4, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
 	AddTextButton(row5, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
 	AddTextButton(row5, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
 	AddTextButton(row5, 2, 3, strings->invertDisplay, evInvertY, nullptr);
 	coloursButton = AddTextButton(row6, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
 	coloursButton->SetText(strings->colourSchemeNames[colours.index]);
-	AddTextButton(row6, 1, 3, strings->brightnessDown, evDimmer, nullptr);
-	AddTextButton(row6, 2, 3, strings->brightnessUp, evBrighter, nullptr);
 	AddTextButton(row7, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
 	AddTextButton(row7, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
 	AddTextButton(row7, 2, 3, strings->saveAndRestart, evRestart, nullptr);
@@ -1721,34 +1706,12 @@ namespace UI
 				StopAdjusting();
 				break;
 
-			case evSetVolume:
-				Adjusting(bp);
-				mgr.SetPopup(volumePopup, AutoPlace, popupY);
-				break;
-
 			case evSetColours:
 				if (coloursPopup != nullptr)
 				{
 					Adjusting(bp);
 					mgr.SetPopup(coloursPopup, AutoPlace, popupY);
 				}
-				break;
-
-			case evBrighter:
-			case evDimmer:
-				ChangeBrightness(ev == evBrighter);
-				CheckSettingsAreSaved();
-				ShortenTouchDelay();
-				break;
-
-			case evAdjustVolume:
-				{
-					const int newVolume = bp.GetIParam();
-					SetVolume(newVolume);
-					volumeButton->SetValue(newVolume);
-				}
-				TouchBeep();									// give audible feedback of the touch at the new volume level
-				CheckSettingsAreSaved();
 				break;
 
 			case evAdjustColours:

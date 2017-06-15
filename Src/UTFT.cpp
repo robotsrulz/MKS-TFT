@@ -165,8 +165,8 @@ inline void UTFT::LCD_Write_COM(uint8_t VL)
 	HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_RESET);
 
 	GPIOE->ODR = (uint16_t)VL;
-	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
+    GPIOB->BSRR = (uint32_t)LCD_nWR_Pin << 16;
+    GPIOB->BSRR = LCD_nWR_Pin;
 }
 
 inline void UTFT::LCD_Write_DATA16(uint16_t VHL)
@@ -174,8 +174,8 @@ inline void UTFT::LCD_Write_DATA16(uint16_t VHL)
 	HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_SET);
 
 	GPIOE->ODR = VHL;
-	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
+    GPIOB->BSRR = (uint32_t)LCD_nWR_Pin << 16;
+    GPIOB->BSRR = LCD_nWR_Pin;
 }
 
 inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num)
@@ -183,13 +183,13 @@ inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num)
 	HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_SET);
 
 	GPIOE->ODR = VHL;
-	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
+    GPIOB->BSRR = (uint32_t)LCD_nWR_Pin << 16;
+    GPIOB->BSRR = LCD_nWR_Pin;
 
 	while (num != 0)
 	{
-		HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
+        GPIOB->BSRR = (uint32_t)LCD_nWR_Pin << 16;
+        GPIOB->BSRR = LCD_nWR_Pin;
 		--num;
 	}
 }
@@ -338,10 +338,11 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 			y1 = p_x1;
 			y2 = p_x2;
 		}
+
 		if (orient & ReverseY)
 		{
-			x2 = disp_x_size - p_y1;
-			x1 = disp_x_size - p_y2;
+			x2 = disp_y_size - p_y1;
+			x1 = disp_y_size - p_y2;
 		}
 		else
 		{
@@ -361,6 +362,7 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 			y1 = p_y1;
 			y2 = p_y2;
 		}
+
 		if (orient & ReverseX)
 		{
 			x2 = disp_x_size - p_x1;
@@ -373,12 +375,14 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 		}
 	}
 
-	LCD_Write_COM_DATA16(0x20, x1);
-	LCD_Write_COM_DATA16(0x21, y1);
+
 	LCD_Write_COM_DATA16(0x50, x1);
 	LCD_Write_COM_DATA16(0x52, y1);
 	LCD_Write_COM_DATA16(0x51, x2);
 	LCD_Write_COM_DATA16(0x53, y2);
+
+	LCD_Write_COM_DATA16(0x20, x1);
+	LCD_Write_COM_DATA16(0x21, y1);
 	LCD_Write_COM(0x22);
 }
 

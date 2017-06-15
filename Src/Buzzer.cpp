@@ -20,23 +20,23 @@ extern TIM_HandleTypeDef htim2;
 
 extern "C" void vBuzzerTimerCallback(TimerHandle_t xTimer) {
 
-    HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
+//    HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
     xTimerStop(xBuzzerTimer, 10);
 }
 
 namespace Buzzer
 {
-	static const uint32_t pwmClockFrequency = 2000000;		// 2MHz clock (OK down to 30Hz PWM frequency)
-	static uint32_t beepTicksToGo = 0;
-	static bool inBuzzer = true;
-
 	// Generate a beep of the given length and frequency. The volume goes from 0 to MaxVolume.
 	void Beep(uint32_t ms)
 	{
-        if ( !Noisy() )
+	    if (!xBuzzerTimer) {
+            xBuzzerTimer = xTimerCreate("Buzzer", ms, false, (void *) 0, vBuzzerTimerCallback);
+//            HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
+	    }
+	    else if ( !Noisy() )
         {
-            HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
             xTimerChangePeriod(xBuzzerTimer, ms, 10);
+//            HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
         }
 	}
 

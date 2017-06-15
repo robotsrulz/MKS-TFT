@@ -44,7 +44,7 @@
 				<ExtraCommands>
 					<Add after='&quot;C:\Program Files (x86)\SEGGER\JLink_V612f\JLink.exe&quot; -if swd -device STM32F107VC -speed 4000 -CommanderScript $(ProjectDir)FlashDebug.jscript' />
 					<Mode before="0" />
-					<Mode after="0" />
+					<Mode after="2" />
 				</ExtraCommands>
 			</Target>
 			<Target title="Release">
@@ -385,6 +385,9 @@
 		<Unit filename="Src\fatfs.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Src\FileManager.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Src\main.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -401,6 +404,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\Print.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\RequestTimer.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\SerialIo.cpp">

@@ -3,11 +3,11 @@
  *
  * Created: 06/11/2015 14:22:55
  *  Author: David
- */ 
+ */
 
 #include "ecv.h"
 #include "RequestTimer.h"
-#include "Hardware/SerialIo.hpp"
+#include "SerialIo.h"
 
 extern bool OkToSend();		// in PanelDue.cpp
 
@@ -36,7 +36,7 @@ bool RequestTimer::Process()
 			SerialIo::SendString(not_null(extra));
 		}
 		SerialIo::SendChar('\n');
-		startTime = SystemTick::GetTickCount();
+		startTime = osKernelSysTick();
 		timerState = running;
 		return true;
 	}

@@ -44,8 +44,8 @@
 
 const uint32_t DefaultBaudRate = 57600;
 
-const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY | InvertBitmap);
-const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(ReverseY);
+const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation> (SwapXY | ReverseY);
+const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation> (Default);
 
 // Controlling constants
 const uint32_t printerPollInterval = 1000;			// poll interval in milliseconds
@@ -304,9 +304,9 @@ void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
 {
 	lcd.InitLCD(dor);									// set up the LCD
 	colours = &colourSchemes[colourScheme];
+    lcd.fillScr(colours->activeBackColour);
 	UI::CreateFields(language, *colours);							// create all the fields
-	lcd.fillScr(black);												// make sure the memory is clear
-	osDelay(100);													// give the LCD time to update
+// 	osDelay(100);													// give the LCD time to update
 }
 
 // Ignore touches for a long time
@@ -337,8 +337,8 @@ void ErrorBeep()
 // The alternative X and Y locations are so that the caller can allow for the touch panel being possibly inverted.
 void DoTouchCalib(PixelNumber x, PixelNumber y, PixelNumber altX, PixelNumber altY, bool wantY, uint16_t& rawRslt)
 {
-	const PixelNumber touchCircleRadius = DISPLAY_Y/32;
-	const PixelNumber touchCalibMaxError = DISPLAY_Y/6;
+	const PixelNumber touchCircleRadius = DISPLAY_Y / 48;
+	const PixelNumber touchCalibMaxError = DISPLAY_Y / 5;
 
 	lcd.setColor(colours->labelTextColour);
 	lcd.fillCircle(x, y, touchCircleRadius);
@@ -1147,10 +1147,7 @@ extern "C" int PanelDueMain(void)
 				if (bp.IsValid())
 				{
 					DelayTouchLong();		// by default, ignore further touches for a long time
-					if (bp.GetEvent() != evAdjustVolume)
-					{
-						TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
-					}
+                    TouchBeep();		// give audible feedback of the touch, unless adjusting the volume
 					UI::ProcessTouch(bp);
 				}
 				else

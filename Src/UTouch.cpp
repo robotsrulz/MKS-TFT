@@ -17,27 +17,30 @@ void UTouch::init(uint16_t xp, uint16_t yp, DisplayOrientation orientationAdjust
 	disp_x_size				= xp;
 	disp_y_size				= yp;
 	offsetX					= 0;
-	scaleX					= (uint16_t)(((uint32_t)(disp_x_size - 1) << 16)/4095);
+	scaleX					= (uint16_t)(((uint32_t)(disp_x_size - 1) << 16)/4096);
 	offsetY					= 0;
-	scaleY					= (uint16_t)(((uint32_t)(disp_y_size - 1) << 16)/4095);
+	scaleY					= (uint16_t)(((uint32_t)(disp_y_size - 1) << 16)/4096);
 
 	HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_RESET);
 
 	uint8_t pTxData[3] = { 0xd4, 0, 0 };
 	uint8_t pRxData[3];
 
+	osDelay(50);
+
 	/* warmup */
 	HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
 	pTxData[0] = 0x94;
 	HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
 
-	HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_SET);
+	// HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_SET);
 }
 
 // If the panel is touched, return the coordinates in x and y and return true; else return false
 bool UTouch::read(uint16_t &px, uint16_t &py, uint16_t * null rawX, uint16_t * null rawY)
 {
 	bool ret = false;
+
 	if (HAL_GPIO_ReadPin(TOUCH_DI_GPIO_Port, TOUCH_DI_Pin) == GPIO_PIN_RESET)	// if screen is touched
 	{
 		HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_RESET);
@@ -92,17 +95,20 @@ bool UTouch::read(uint16_t &px, uint16_t &py, uint16_t * null rawX, uint16_t * n
 // We need to allow the touch chip ADC input to settle. See TI app note http://www.ti.com/lit/pdf/sbaa036.
 bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 {
-	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD3 : 0x93), 0, 0 };
+//	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD3 : 0x93), 0, 0 };
+//	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD4 : 0x94), 0, 0 };
+	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD7 : 0x97), 0, 0 };
+
 	uint8_t pRxData[3];
 
 	/* warmup */
 	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);
 
-	const size_t numReadings = 8;
-	const uint16_t maxDiff = 40;					// needs to be big enough to handle jitter.
+	const size_t numReadings = 6;
+	const uint16_t maxDiff = 300;					// needs to be big enough to handle jitter.
 													// 8 was OK for the 4.3 and 5 inch displays but not the 7 inch.
 													// 25 is OK for most 7" displays.
-	const unsigned int maxAttempts = 16;
+	const unsigned int maxAttempts = 40;
 
 	uint16_t ring[numReadings];
 	uint32_t sum = 0;
@@ -111,7 +117,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 	for (size_t i = 0; i < numReadings; ++i)
 	{
 		HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
-		uint16_t val = *((uint16_t *) (pRxData + 1));
+		uint16_t val = *((uint16_t *) (pRxData + 1)) >> 4;
 
 		ring[i] = val;
 		sum += val;
@@ -132,6 +138,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 			if (diff(avg, ring[i]) > maxDiff)
 			{
 				ok = false;
+				last = i;
 				break;
 			}
 		}
@@ -144,7 +151,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 		sum -= ring[last];
 
 		HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
-		uint16_t val = *((uint16_t *) (pRxData + 1));
+		uint16_t val = *((uint16_t *) (pRxData + 1)) >> 4;
 
 		ring[last] = val;
 		sum += val;
@@ -153,8 +160,8 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 
 	pTxData[0] &= 0xF8;
 	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);
-	pTxData[0] = 0;
-	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);	// read the final data
+//	pTxData[0] = 0;
+//	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);	// read the final data
 	rslt = avg;
 	return ok;
 }

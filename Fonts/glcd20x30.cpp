@@ -14,6 +14,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
+#include "UserInterface.h"
 
 const uint8_t glcd20x30[] =
 {
