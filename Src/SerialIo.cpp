@@ -14,6 +14,8 @@
 
 extern UART_HandleTypeDef huart2;
 
+extern "C" void Error_Handler(void);
+
 namespace SerialIo
 {
 	static unsigned int lineNumber = 0;
@@ -29,6 +31,21 @@ namespace SerialIo
 	// Initialize the serial I/O subsystem, or re-initialize it with a new baud rate
 	void Init(uint32_t baudRate)
 	{
+	    /* USART2 init function */
+
+        huart2.Instance = USART2;
+        huart2.Init.BaudRate = baudRate;
+        huart2.Init.WordLength = UART_WORDLENGTH_8B;
+        huart2.Init.StopBits = UART_STOPBITS_1;
+        huart2.Init.Parity = UART_PARITY_NONE;
+        huart2.Init.Mode = UART_MODE_TX_RX;
+        huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+        huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+
+        if (HAL_UART_Init(&huart2) != HAL_OK)
+        {
+            Error_Handler();
+        }
 	}
 
 	uint16_t numChars = 0;

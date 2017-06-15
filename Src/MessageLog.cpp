@@ -54,7 +54,7 @@ namespace MessageLog
 			}
 			else
 			{
-				uint32_t age = (HAL_GetTick() - tim)/1000;	// age of message in seconds
+				uint32_t age = (osKernelSysTick() - tim)/1000;	// age of message in seconds
 				if (age < 10 * 60)
 				{
 					snprintf(p, Message::rttLen, "%lum%02lu", age/60, age%60);
@@ -143,7 +143,7 @@ namespace MessageLog
 					safeStrncpy(messages[msgRow].msg, data, maxMessageChars + 1);
 				}
 
-				messages[msgRow].receivedTime = (numLines == 1) ? HAL_GetTick() : 0;
+				messages[msgRow].receivedTime = (numLines == 1) ? osKernelSysTick() : 0;
 			} while (split && data[0] != '\0');
 
 			newMessageStartRow = (messageStartRow + numLines) % (numMessageRows + 1);

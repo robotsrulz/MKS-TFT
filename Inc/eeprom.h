@@ -45,10 +45,18 @@
 
 extern I2C_HandleTypeDef hi2c1;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 HAL_StatusTypeDef readEEPROM(uint16_t address, uint8_t* MemTarget,
 		uint16_t Size);
 HAL_StatusTypeDef writeEEPROM(uint16_t address, uint8_t* MemTarget,
 		uint16_t Size);
+
+#ifdef __cplusplus
+}
+#endif
 
 /**
   * @}

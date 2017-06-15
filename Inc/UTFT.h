@@ -67,14 +67,8 @@ enum DisplayOrientation {
 	InvLandscape = SwapXY | ReverseX | InvertText
 };
 
-// const DisplayOrientation DefaultDisplayOrientAdjust = static_cast<DisplayOrientation>(SwapXY | ReverseY | InvertBitmap);
-// const DisplayOrientation DefaultTouchOrientAdjust = static_cast<DisplayOrientation>(ReverseY);
-
 #define DISPLAY_X				(320)
 #define DISPLAY_Y				(240)
-
-// const PixelNumber DisplayX = DISPLAY_X;
-// const PixelNumber DisplayY = DISPLAY_Y;
 
 // This describes the structure we use to store font information.
 // The first 5 fields are also the layout of the data in the font header.

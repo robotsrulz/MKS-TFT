@@ -409,14 +409,6 @@ void CreateBaudRatePopup(const ColourScheme& colours)
 	baudPopup = CreateIntPopupBar(colours, fullPopupWidth, 5, baudPopupText, baudPopupParams, evAdjustBaudRate, evAdjustBaudRate);
 }
 
-// Create the volume adjustment popup
-void CreateVolumePopup(const ColourScheme& colours)
-{
-	static_assert(Buzzer::MaxVolume == 5, "MaxVolume assumed to be 5 here");
-	static const char* const volumePopupText[Buzzer::MaxVolume + 1] = { "0", "1", "2", "3", "4", "5" };
-	volumePopup = CreateIntPopupBar(colours, fullPopupWidth, Buzzer::MaxVolume + 1, volumePopupText, nullptr, evAdjustVolume, evAdjustVolume);
-}
-
 // Create the colour scheme change popup
 void CreateColoursPopup(const ColourScheme& colours)
 {
@@ -840,7 +832,6 @@ namespace UI
 		CreateExtrudePopup(colours);
 		CreateFileListPopup(colours);
 		CreateFileActionPopup(colours);
-		CreateVolumePopup(colours);
 		CreateBaudRatePopup(colours);
 		CreateColoursPopup(colours);
 		CreateAreYouSurePopup(colours);
@@ -1334,7 +1325,7 @@ namespace UI
 			case evEmergencyStop:
 				{
 					SerialIo::SendString("M112\n");
-					Delay(1000);
+					osDelay(1000);
 					SerialIo::SendString("M999\n");
 					Reconnect();
 				}

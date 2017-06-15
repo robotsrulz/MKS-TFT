@@ -3,7 +3,7 @@
  *
  * Created: 14/11/2014 19:56:03
  *  Author: David
- */ 
+ */
 
 
 #ifndef MISC_H_
@@ -20,6 +20,8 @@
 void safeStrncpy(char* array dst, const char* array src, size_t n)
 pre(n != 0; _ecv_isNullTerminated(src); dst.upb >= n)
 post(_ecv_isNullTerminated(dst));
+
+int strcasecmp (const char *s1, const char *s2);
 
 // Return true if string a is the same as or starts with string b
 bool stringStartsWith(const char* array a, const char* array b)

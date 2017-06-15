@@ -38,6 +38,7 @@
 				<Linker>
 					<Add option="-u _scanf_float" />
 					<Add option="-u _printf_float" />
+					<Add option="-lstdc++" />
 					<Add option="-Wl,--gc-sections" />
 				</Linker>
 				<ExtraCommands>
@@ -211,6 +212,27 @@
 		<Unit filename="FlashDebug.jscript">
 			<Option target="Debug" />
 		</Unit>
+		<Unit filename="Fonts\glcd10x10.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Fonts\glcd16x16.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Fonts\glcd19x20.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Fonts\glcd19x21.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Fonts\glcd20x30.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Fonts\glcd22x32.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Fonts\glcd28x32.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Icons\HomeIcons.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -233,6 +255,7 @@
 		<Unit filename="Inc\ffconf.h" />
 		<Unit filename="Inc\FileManager.h" />
 		<Unit filename="Inc\FreeRTOSConfig.h" />
+		<Unit filename="Inc\Mem.h" />
 		<Unit filename="Inc\MessageLog.h" />
 		<Unit filename="Inc\Misc.h" />
 		<Unit filename="Inc\mks_conf.h" />
@@ -350,6 +373,9 @@
 		<Unit filename="MKS_TFT.jflash">
 			<Option target="Debug" />
 		</Unit>
+		<Unit filename="Src\Buzzer.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Src\Display.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -362,10 +388,16 @@
 		<Unit filename="Src\main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Src\Mem.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Src\MessageLog.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\Misc.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\PanelDue.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\Print.cpp">
