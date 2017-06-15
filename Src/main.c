@@ -66,7 +66,7 @@ QueueHandle_t xUIEventQueue;
 QueueHandle_t xPCommEventQueue;
 
 #define MAXCOMM1SIZE    0xffu                // Biggest string the user will type
-static uint8_t comm1RxBuffer = '\000';      // where we store that one character that just came in
+uint8_t comm1RxBuffer = '\000';      // where we store that one character that just came in
 static volatile uint8_t comm1RxString[MAXCOMM1SIZE + 1]; // where we build our string from characters coming in
 static volatile int comm1RxIndex = 0;                // index for going though comm1RxString
 
@@ -612,37 +612,6 @@ void StartComm2Task(void const * argument) {
 	}
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if (huart->Instance == USART2)
-	{
-        __HAL_UART_FLUSH_DRREGISTER(&huart2); // Clear the buffer to prevent overrun
-/*
-        int i = 0;
-
-        if (comm1RxBuffer == '\n' || comm1RxBuffer == '\r') // If Enter
-        {
-            comm1RxString[comm1RxIndex] = 0;
-            comm1RxIndex = 0;
-
-//            strncpy(comm1RxBuf, comm1RxString, MAX_STRING_SIZE);
-            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-            xSemaphoreGiveFromISR(xComm1Semaphore, &xHigherPriorityTaskWoken);
-        }
-        else
-        {
-            comm1RxString[comm1RxIndex] = comm1RxBuffer; // Add that character to the string
-            comm1RxIndex++;
-
-            if (comm1RxIndex >= MAX_STRING_SIZE) // User typing too much, we can't have commands that big
-            {
-                comm1RxIndex = 0;
-                for (i = 0; i < MAX_STRING_SIZE; i++) comm1RxString[i] = 0; // Clear the string buffer
-            }
-        }
-*/
-	}
-}
 /* USER CODE END 4 */
 
 /* StartUITask function */

@@ -224,22 +224,36 @@
 		<Unit filename="Icons\NozzleIcons.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Inc\Buzzer.h" />
+		<Unit filename="Inc\Display.h" />
 		<Unit filename="Inc\ecv.h" />
 		<Unit filename="Inc\eeprom.h" />
 		<Unit filename="Inc\events.h" />
 		<Unit filename="Inc\fatfs.h" />
 		<Unit filename="Inc\ffconf.h" />
+		<Unit filename="Inc\FileManager.h" />
 		<Unit filename="Inc\FreeRTOSConfig.h" />
+		<Unit filename="Inc\MessageLog.h" />
+		<Unit filename="Inc\Misc.h" />
 		<Unit filename="Inc\mks_conf.h" />
+		<Unit filename="Inc\PanelDue.h" />
 		<Unit filename="Inc\Print.h" />
+		<Unit filename="Inc\PrinterStatus.h" />
+		<Unit filename="Inc\RequestTimer.h" />
+		<Unit filename="Inc\Reset.h" />
+		<Unit filename="Inc\SerialIo.h" />
 		<Unit filename="Inc\spiflash_w25q16dv.h" />
 		<Unit filename="Inc\spisd_diskio.h" />
 		<Unit filename="Inc\stm32f1xx_hal_conf.h" />
 		<Unit filename="Inc\stm32f1xx_it.h" />
+		<Unit filename="Inc\Strings.h" />
 		<Unit filename="Inc\usb_host.h" />
 		<Unit filename="Inc\usbh_conf.h" />
 		<Unit filename="Inc\usbh_diskio.h" />
+		<Unit filename="Inc\UserInterface.h" />
 		<Unit filename="Inc\UTFT.h" />
+		<Unit filename="Inc\UTouch.h" />
+		<Unit filename="Inc\Vector.h" />
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc.h" />
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_bot.h" />
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_scsi.h" />
@@ -336,6 +350,9 @@
 		<Unit filename="MKS_TFT.jflash">
 			<Option target="Debug" />
 		</Unit>
+		<Unit filename="Src\Display.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Src\eeprom.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -345,10 +362,16 @@
 		<Unit filename="Src\main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Src\MessageLog.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\Misc.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Src\Print.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="Src\serial_io.c">
+		<Unit filename="Src\SerialIo.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\spiflash_w25q16dv.c">
@@ -375,7 +398,13 @@
 		<Unit filename="Src\usbh_diskio.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Src\UserInterface.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Src\UTFT.cpp">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Src\UTouch.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="STM32F107VC_FLASH.ld" />
