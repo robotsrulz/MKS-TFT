@@ -151,7 +151,7 @@ const StringTable LanguageTables[2] =
 		"Are you sure?",
 		"Touch the spot",
 		"Some settings are not saved!",
-		"Touch Save & Restart to use new settings",
+		"Touch" THIN_SPACE "Save" THIN_SPACE "&" THIN_SPACE "Restart" THIN_SPACE "to" THIN_SPACE "activate",
 		"Move head",
 		"Extrude" THIN_SPACE "amount" THIN_SPACE "(mm)",
 		"Speed (mm/s)",
@@ -161,7 +161,7 @@ const StringTable LanguageTables[2] =
 		"Current Z offset: ",
 		"Message",
 		"Messages",
-		"Panel Due firmware version ",	// note space at end
+		"PanelMKS firmware ",	// note space at end
 
 		// File popup
 		"Storage" THIN_SPACE,				// note the space on the end
@@ -257,7 +257,7 @@ const StringTable LanguageTables[2] =
 		"Текущее смещение Z: ",
 		"Сообщение",
 		"Сообщения",
-		"Panel Due версия прошивки ",	// note space at end
+		"PanelMKS версия ",	// note space at end
 
 		// File popup
 		"На карте ",				// note the space on the end

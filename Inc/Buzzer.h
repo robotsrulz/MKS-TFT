@@ -9,10 +9,16 @@
 #ifndef BUZZER_H_
 #define BUZZER_H_
 
+#ifdef __cplusplus
+
 namespace Buzzer
 {
 	void Beep(uint32_t ms);
 	bool Noisy();
+	void CheckStop();
 }
+#else
+    void BuzzerCheckStop();
+#endif
 
 #endif /* BUZZER_H_ */

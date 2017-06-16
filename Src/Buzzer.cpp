@@ -20,7 +20,6 @@ extern TIM_HandleTypeDef htim2;
 
 extern "C" void vBuzzerTimerCallback(TimerHandle_t xTimer) {
 
-//    HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
     xTimerStop(xBuzzerTimer, 10);
 }
 
@@ -31,20 +30,31 @@ namespace Buzzer
 	{
 	    if (!xBuzzerTimer) {
             xBuzzerTimer = xTimerCreate("Buzzer", ms, false, (void *) 0, vBuzzerTimerCallback);
-//            HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
+            HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
 	    }
 	    else if ( !Noisy() )
         {
             xTimerChangePeriod(xBuzzerTimer, ms, 10);
-//            HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
+            HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3);
         }
 	}
 
 	// Return true if the buzzer is (or should be) still sounding
 	bool Noisy()
 	{
-		return xTimerIsTimerActive(xBuzzerTimer) != pdFALSE;
+		return !xBuzzerTimer ? false : (xTimerIsTimerActive(xBuzzerTimer) != pdFALSE);
 	}
+
+	void CheckStop()
+	{
+	    if ( !Noisy() )
+            HAL_TIM_OC_Stop_IT(&htim2, TIM_CHANNEL_3);
+	}
+}
+
+extern "C" void BuzzerCheckStop() {
+
+    Buzzer::CheckStop();
 }
 
 // End

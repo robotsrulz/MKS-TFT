@@ -38,6 +38,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "mks_conf.h"
+#include "Buzzer.h"
 
 /* USER CODE END Includes */
 
@@ -56,10 +57,11 @@ TIM_HandleTypeDef htim2;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
-static osThreadId uiTaskHandlerHandle;	// UI thread
+static osThreadId uiTaskHandle;      // UI thread
+static osThreadId serviceTaskHandle; // low latency tasks
+
 // static osThreadId comm1TaskHandle;		// printing thread
 // static osThreadId comm2TaskHandle;		// wi-fi/bt thread
-// static osThreadId touchHandlerHandle;	// touch screen finger up/down
 // static osThreadId sdcardHandlerHandle;	// sd card insert/remove
 
 // QueueHandle_t xUIEventQueue;
@@ -88,9 +90,10 @@ static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 void StartUITask(void const * argument);
+void StartServiceTask(void const * argument);
+
 // void StartComm1Task(void const * argument);
 // void StartComm2Task(void const * argument);
-// void StartTouchHandlerTask(void const * argument);
 // void StartSDHandlerTask(void const * argument);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
@@ -130,9 +133,6 @@ int main(void)
 //	xComm1Semaphore = xSemaphoreCreateBinary();
 //	xComm2Semaphore = xSemaphoreCreateBinary();
 
-//	osThreadDef(touchHandlerTask, StartTouchHandlerTask, osPriorityNormal, 0, 128);
-//	touchHandlerHandle = osThreadCreate(osThread(touchHandlerTask), NULL);
-
 //	osThreadDef(sdcardHandlerTask, StartSDHandlerTask, osPriorityNormal, 0,	128);
 //	sdcardHandlerHandle = osThreadCreate(osThread(sdcardHandlerTask), NULL);
 
@@ -142,8 +142,11 @@ int main(void)
 //	osThreadDef(comm2Task, StartComm2Task, osPriorityNormal, 0,	128);
 //	comm2TaskHandle = osThreadCreate(osThread(comm2Task), NULL);
 
+	osThreadDef(serviceHandlerTask, StartServiceTask, osPriorityNormal, 0, 128);
+	serviceTaskHandle = osThreadCreate(osThread(serviceHandlerTask), NULL);
+
 	osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 14 * 1024 / 4);
-	uiTaskHandlerHandle = osThreadCreate(osThread(uiTask), NULL);
+	uiTaskHandle = osThreadCreate(osThread(uiTask), NULL);
 
 //	xUIEventQueue = xQueueCreate(UI_QUEUE_SIZE, sizeof(xUIEvent_t));
 //	if (xUIEventQueue == NULL) {
@@ -481,70 +484,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
-/*
-
-void StartTouchHandlerTask(void const * argument) {
-
-	uint8_t pTxData[3] = { 0xd4, 0, 0 };
-	uint8_t pRxData[3];
-
-	HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
-	pTxData[0] = 0x94;
-	HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
+void StartServiceTask(void const * argument) {
 
 	while (1) {
-
-		// if(xSemaphoreTake(xTouchSemaphore, portMAX_DELAY ) == pdTRUE )  {
-
-			osDelay(10);
-
-			while (HAL_GPIO_ReadPin(TOUCH_DI_GPIO_Port, TOUCH_DI_Pin) == GPIO_PIN_RESET) {
-
-				HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_RESET);
-
-				uint16_t x[3], y[3], i;
-
-					for (i = 0; i < 3; i++) {
-						pTxData[0] = 0xd4;
-						HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3,
-								1000);
-						y[i] = (unsigned int) (pRxData[1] << 8) + pRxData[2];
-
-						pTxData[0] = 0x94;
-						HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3,
-								1000);
-						x[i] = (unsigned int) (pRxData[1] << 8) + pRxData[2];
-					}
-
-				HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_SET);
-
-//				xTouchX = Lcd_Touch_Get_Closest_Average(x);
-//				xTouchY = Lcd_Touch_Get_Closest_Average(y);
-
-//				xUIEvent_t event;
-//				event.ucEventID = TOUCH_DOWN_EVENT;
-
-//				event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
-//				xQueueSendToBack(xUIEventQueue, &event, UI_QUEUE_TIMEOUT);
-
-				osDelay(125); // limit touch event rate
-			}
-
-                if (xTouchX && xTouchY) {
-//                    xUIEvent_t event;
-//                    event.ucEventID = TOUCH_UP_EVENT;
-//                    event.ucData.touchXY = ((unsigned int) xTouchX << 16) + xTouchY;
-//                    xQueueSendToBack(xUIEventQueue, &event, UI_QUEUE_TIMEOUT);
-
-                    xTouchX = 0;
-                    xTouchY = 0;
-
-                    // TODO: continuous gesture recognition here!
-                    osDelay(125);
-                }
-			}
-		}
+   		BuzzerCheckStop();
+        osDelay(1);
+	}
 }
+
+/*
 
 void StartSDHandlerTask(void const * argument) {
 
