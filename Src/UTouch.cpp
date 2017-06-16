@@ -95,9 +95,9 @@ bool UTouch::read(uint16_t &px, uint16_t &py, uint16_t * null rawX, uint16_t * n
 // We need to allow the touch chip ADC input to settle. See TI app note http://www.ti.com/lit/pdf/sbaa036.
 bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 {
-//	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD3 : 0x93), 0, 0 };
+	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD3 : 0x93), 0, 0 };
 //	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD4 : 0x94), 0, 0 };
-	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD7 : 0x97), 0, 0 };
+//	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD7 : 0x97), 0, 0 };
 
 	uint8_t pRxData[3];
 
@@ -105,7 +105,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);
 
 	const size_t numReadings = 6;
-	const uint16_t maxDiff = 300;					// needs to be big enough to handle jitter.
+	const uint16_t maxDiff = 70;					// needs to be big enough to handle jitter.
 													// 8 was OK for the 4.3 and 5 inch displays but not the 7 inch.
 													// 25 is OK for most 7" displays.
 	const unsigned int maxAttempts = 40;
@@ -117,7 +117,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 	for (size_t i = 0; i < numReadings; ++i)
 	{
 		HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
-		uint16_t val = *((uint16_t *) (pRxData + 1)) >> 4;
+		uint16_t val = (((uint16_t)pRxData[1] << 8) + pRxData[2]) >> 3;
 
 		ring[i] = val;
 		sum += val;
@@ -151,7 +151,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 		sum -= ring[last];
 
 		HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
-		uint16_t val = *((uint16_t *) (pRxData + 1)) >> 4;
+		uint16_t val = (((uint16_t)pRxData[1] << 8) + pRxData[2]) >> 3;
 
 		ring[last] = val;
 		sum += val;
@@ -160,8 +160,8 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 
 	pTxData[0] &= 0xF8;
 	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);
-//	pTxData[0] = 0;
-//	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);	// read the final data
+	pTxData[0] = 0;
+	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);	// read the final data
 	rslt = avg;
 	return ok;
 }

@@ -99,7 +99,7 @@ const ColourScheme *colours = &colourSchemes[0];
 
 struct EEPROMData
 {
-	static const uint32_t magicVal = 0x3AB629D1;
+	static const uint32_t magicVal = 0x3AB629D2;
 	static const uint32_t muggleVal = 0xFFFFFFFF;
 
 	uint32_t magic;
