@@ -202,25 +202,25 @@ const StringTable LanguageTables[2] =
 		"Русский",
 
 		// Main page strings
-		"Управление",
+		"Рулить",
 		"Печать",
 		"Консоль",
-		"Настройка",
-		"Текущ" THIN_SPACE DEGREE_SYMBOL "C",
-		"Активн" THIN_SPACE DEGREE_SYMBOL "C",
-		"Неакт" THIN_SPACE DEGREE_SYMBOL "C",
+		"Настрой",
+		"Текущая" THIN_SPACE DEGREE_SYMBOL "C",
+		"Активная" THIN_SPACE DEGREE_SYMBOL "C",
+		"Неактивн" THIN_SPACE DEGREE_SYMBOL "C",
 		"Двигать",
-		"Выдавить",
+		"Давить",
 		"Макро",
 		"СТОП",
 
 		// Print page
-		"Поток" THIN_SPACE "%",
-		"Темп" THIN_SPACE,	       			// note space at end
-		"Обдув" THIN_SPACE,					// note space at end
+		"Экструзия %",
+		"Скор" THIN_SPACE, 	       			// note space at end
+		"Вент" THIN_SPACE,					// note space at end
 		"Осталось: ",
 		"файл ",							// note space at end
-		", филамент ",						// note space at end
+		", пластик ",						// note space at end
 		", слой ",							// note space at end
 		"n/a",
 		"Пауза",
@@ -247,11 +247,11 @@ const StringTable LanguageTables[2] =
 		"Вы уверены?",
 		"Дотроньтесь до точки",
 		"Некоторые настройки не сохранены!",
-		"Нажмите Сохран/Рестарт для активации настроек",
+		"Сохран/Рестарт для применения",
 		"Двигать по осям",
-		"Выдавить пластик (мм)",
+		"Выдавить" THIN_SPACE "пластик" THIN_SPACE "(мм)",
 		"Скорость (мм/с)",
-		"Выдавить",
+		"Давить",
 		"Откат",
 		"Микрошаг",
 		"Текущее смещение Z: ",

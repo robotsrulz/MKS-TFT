@@ -212,10 +212,7 @@
 		<Unit filename="FlashDebug.jscript">
 			<Option target="Debug" />
 		</Unit>
-		<Unit filename="Fonts\glcd19x21.cpp">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="Fonts\glcd28x32.cpp">
+		<Unit filename="Fonts\glcd17x22.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Icons\HomeIcons.cpp">

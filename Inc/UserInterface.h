@@ -61,7 +61,7 @@ const PixelNumber closeButtonWidth = 40;
 
 const PixelNumber touchCalibMargin = 6;
 
-#define DEFAULT_FONT	glcd19x21
+#define DEFAULT_FONT	glcd17x22
 extern const uint8_t DEFAULT_FONT[]; 				// declare which fonts we will be using
 
 const PixelNumber buttonHeight = rowTextHeight + 4;
