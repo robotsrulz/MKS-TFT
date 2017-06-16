@@ -27,8 +27,8 @@ const unsigned int maxHeaters = 5;
 const PixelNumber margin = 1;
 const PixelNumber textButtonMargin = 1;
 const PixelNumber iconButtonMargin = 1;
-const PixelNumber outlinePixels = 2;
-const PixelNumber fieldSpacing = 4;
+const PixelNumber outlinePixels = 1;
+const PixelNumber fieldSpacing = 1;
 const PixelNumber statusFieldWidth = 156;
 const PixelNumber bedColumn = 114;
 
@@ -36,7 +36,7 @@ const PixelNumber rowTextHeight = 21;	// height of the font we use
 const PixelNumber rowHeight = 27;
 const PixelNumber moveButtonRowSpacing = 12;
 const PixelNumber extrudeButtonRowSpacing = 12;
-const PixelNumber fileButtonRowSpacing = 8;
+const PixelNumber fileButtonRowSpacing = 4;
 const PixelNumber keyboardButtonRowSpacing = 6;		// small enough to show 2 lines of messages
 
 const PixelNumber speedTextWidth = 70;
@@ -115,7 +115,7 @@ const PixelNumber keyboardPopupHeight = (5 * keyButtonVStep) + (2 * keyboardTopM
 const PixelNumber keyboardPopupY = margin;
 
 const unsigned int numFileColumns = 1;
-const unsigned int numFileRows = (fullPopupHeight - (2 * popupTopMargin) + fileButtonRowSpacing)/(buttonHeight + fileButtonRowSpacing) - 1;
+const unsigned int numFileRows = 5;
 const unsigned int numDisplayedFiles = numFileColumns * numFileRows;
 const PixelNumber fileListPopupWidth = fullPopupWidth;
 const PixelNumber fileListPopupHeight = ((numFileRows + 1) * buttonHeight) + (numFileRows * fileButtonRowSpacing) + (2 * popupTopMargin);

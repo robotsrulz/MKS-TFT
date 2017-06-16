@@ -120,8 +120,8 @@ const StringTable LanguageTables[2] =
 
 		// Print page
 		"Extruder" THIN_SPACE "%",
-		"Speed ",							// note space at end
-		"Fan ",								// note space at end
+		"Spd" THIN_SPACE,							// note space at end
+		"Fan" THIN_SPACE,								// note space at end
 		"Time left: ",
 		"file ",							// note space at end
 		", filament ",						// note space at end
@@ -164,7 +164,7 @@ const StringTable LanguageTables[2] =
 		"Panel Due firmware version ",	// note space at end
 
 		// File popup
-		"Files on card ",				// note the space on the end
+		"Storage" THIN_SPACE,				// note the space on the end
 		"Macros",
 		"Error ",						// note the space at the end
 		" accessing SD card",			// note the space at the start
