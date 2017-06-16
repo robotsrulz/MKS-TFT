@@ -51,7 +51,7 @@ struct StringTable
 	// Setup page
 	CSTRING volume;
 	CSTRING calibrateTouch;
-	CSTRING mirrorDisplay;
+	CSTRING rotateDisplay;
 	CSTRING invertDisplay;
 	CSTRING theme;
 	CSTRING brightnessDown;
@@ -135,7 +135,7 @@ const StringTable LanguageTables[4] =
 		// Setup page
 		"Volume ",							// note space at end
 		"Calibrate touch",
-		"Mirror display",
+		"Rotate display",
 		"Invert display",
 		"Theme",
 		"Brightness -",
@@ -153,7 +153,7 @@ const StringTable LanguageTables[4] =
 		"Some settings are not saved!",
 		"Touch Save & Restart to use new settings",
 		"Move head",
-		"Extrusion amount (mm)",
+		"Extrude" THIN_SPACE "amount" THIN_SPACE "(mm)",
 		"Speed (mm/s)",
 		"Extrude",
 		"Retract",
@@ -426,8 +426,8 @@ const StringTable LanguageTables[4] =
 		// Setup page
 		"Громкость" THIN_SPACE,				// note space at end
 		"Калибровка",
-		"Зеркально",
 		"Перевернуть",
+        "Зеркально",
 		"Тема",
 		"Яркость -",
 		"Яркость +",

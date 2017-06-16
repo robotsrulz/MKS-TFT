@@ -183,9 +183,6 @@ inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num)
 	HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_SET);
 
 	GPIOE->ODR = VHL;
-    GPIOB->BSRR = (uint32_t)LCD_nWR_Pin << 16;
-    GPIOB->BSRR = LCD_nWR_Pin;
-
 	while (num != 0)
 	{
         GPIOB->BSRR = (uint32_t)LCD_nWR_Pin << 16;

@@ -252,8 +252,8 @@ void CreateIntegerAdjustPopup(const ColourScheme& colours)
 // Create the movement popup window
 void CreateMovePopup(const ColourScheme& colours)
 {
-	static const char * array const xyJogValues[] = { "-100", "-10", "-1", "-0.1", "0.1",  "1", "10", "100" };
-	static const char * array const zJogValues[] = { "-50", "-5", "-0.5", "-0.05", "0.05",  "0.5", "5", "50" };
+	static const char * array const xyJogValues[] = { "-10", "-1", "-0.1", "0.1",  "1", "10" };
+	static const char * array const zJogValues[] = { "-5", "-0.5", "-.05", "0.05",  "0.5", "5" };
 
 	movePopup = CreatePopupWindow(movePopupHeight, movePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->moveHead);
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
@@ -263,7 +263,7 @@ void CreateMovePopup(const ColourScheme& colours)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 		const char * array const * array values = (axisNames[i][0] == 'Z') ? zJogValues : xyJogValues;
-		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, 8, values, values, e);
+		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, 6, values, values, e);
 
 		// We create the label after the button row, so that the buttons follow it in the field order, which makes it easier to hide them
 		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -714,17 +714,16 @@ void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
 	settingsNotSavedField->Show(false);
 
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-	baudRateButton = AddIntegerButton(row4, 0, 3, nullptr, " baud", evSetBaudRate);
+	baudRateButton = AddIntegerButton(row4, 0, 2, nullptr, " baud", evSetBaudRate);
 	baudRateButton->SetValue(GetBaudRate());
-	languageButton = AddTextButton(row4, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
-	AddTextButton(row5, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
-	AddTextButton(row5, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
-	AddTextButton(row5, 2, 3, strings->invertDisplay, evInvertY, nullptr);
-	coloursButton = AddTextButton(row6, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
+	languageButton = AddTextButton(row4, 1, 2, LanguageTables[language].languageName, evSetLanguage, nullptr);
+	AddTextButton(row5, 0, 2, strings->calibrateTouch, evCalTouch, nullptr);
+	AddTextButton(row5, 1, 2, strings->rotateDisplay, evRotate, nullptr);
+	coloursButton = AddTextButton(row6, 0, 2, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
 	coloursButton->SetText(strings->colourSchemeNames[colours.index]);
-	AddTextButton(row7, 0, 3, strings->saveSettings, evSaveSettings, nullptr);
-	AddTextButton(row7, 1, 3, strings->clearSettings, evFactoryReset, nullptr);
-	AddTextButton(row7, 2, 3, strings->saveAndRestart, evRestart, nullptr);
+	AddTextButton(row6, 1, 2, strings->saveSettings, evSaveSettings, nullptr);
+	AddTextButton(row7, 0, 2, strings->clearSettings, evFactoryReset, nullptr);
+	AddTextButton(row7, 1, 2, strings->saveAndRestart, evRestart, nullptr);
 	setupRoot = mgr.GetRoot();
 }
 
@@ -1677,14 +1676,8 @@ namespace UI
 				ShowKeyboard();
 				break;
 
-			case evInvertX:
-				MirrorDisplay();
-				CalibrateTouch();
-				CheckSettingsAreSaved();
-				break;
-
-			case evInvertY:
-				InvertDisplay();
+			case evRotate:
+				RotateDisplay();
 				CalibrateTouch();
 				CheckSettingsAreSaved();
 				break;
@@ -1902,8 +1895,7 @@ namespace UI
 			case evSetColours:
 			case evSetLanguage:
 			case evCalTouch:
-			case evInvertX:
-			case evInvertY:
+			case evRotate:
 			case evSaveSettings:
 			case evFactoryReset:
 			case evRestart:

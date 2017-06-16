@@ -405,15 +405,9 @@ bool IsSaveNeeded()
 	return nvData != savedNvData;
 }
 
-void MirrorDisplay()
+void RotateDisplay()
 {
-	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | InvertBitmap));
-	lcd.InitLCD(nvData.lcdOrientation);
-}
-
-void InvertDisplay()
-{
-	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseX | ReverseY | InvertText | InvertBitmap));
+	nvData.lcdOrientation = static_cast<DisplayOrientation>(nvData.lcdOrientation ^ (ReverseY));
 	lcd.InitLCD(nvData.lcdOrientation);
 }
 

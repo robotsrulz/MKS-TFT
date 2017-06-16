@@ -94,7 +94,7 @@ const PixelNumber fullPopupWidth = DISPLAY_X - (2 * margin);
 const PixelNumber fullPopupHeight = DISPLAY_X - (2 * margin);
 const PixelNumber popupBarHeight = buttonHeight + (2 * popupTopMargin);
 
-const PixelNumber tempPopupBarWidth = (3 * fullPopupWidth)/4;
+const PixelNumber tempPopupBarWidth = (5 * fullPopupWidth)/6;
 const PixelNumber fileInfoPopupWidth = fullPopupWidth - (4 * margin),
 				  fileInfoPopupHeight = (8 * rowTextHeight) + buttonHeight + (2 * popupTopMargin);
 const PixelNumber areYouSurePopupWidth = DISPLAY_X - 80,
@@ -108,7 +108,7 @@ const PixelNumber extrudePopupHeight = (5 * buttonHeight) + (4 * extrudeButtonRo
 
 const PixelNumber keyboardButtonWidth = DISPLAY_X/5;
 const PixelNumber keyboardPopupWidth = fullPopupWidth;
-const PixelNumber keyButtonWidth = (keyboardPopupWidth - 2 * popupSideMargin)/16;
+const PixelNumber keyButtonWidth = (keyboardPopupWidth - 2 * popupSideMargin)/12;
 const PixelNumber keyButtonHStep = (keyboardPopupWidth - 2 * popupSideMargin - keyButtonWidth)/11;
 const PixelNumber keyButtonVStep = buttonHeight + keyboardButtonRowSpacing;
 const PixelNumber keyboardPopupHeight = (5 * keyButtonVStep) + (2 * keyboardTopMargin) + buttonHeight;
