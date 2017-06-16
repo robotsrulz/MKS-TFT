@@ -120,7 +120,7 @@ const unsigned int numDisplayedFiles = numFileColumns * numFileRows;
 const PixelNumber fileListPopupWidth = fullPopupWidth;
 const PixelNumber fileListPopupHeight = ((numFileRows + 1) * buttonHeight) + (numFileRows * fileButtonRowSpacing) + (2 * popupTopMargin);
 
-const uint32_t numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight;
+const uint32_t numMessageRows = (rowTabs - margin - rowHeight)/rowTextHeight - 1;
 const PixelNumber messageTextX = margin + messageTimeWidth + 2;
 const PixelNumber messageTextWidth = DISPLAY_X - margin - messageTextX;
 
