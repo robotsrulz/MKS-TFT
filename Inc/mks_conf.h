@@ -34,9 +34,10 @@
 #ifndef __MKS_CONF_H
 #define __MKS_CONF_H
 
+#include "ecv.h"
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
-#include "ecv.h"
+#include "fatfs.h"
 
 #define SPEAKER_Pin             GPIO_PIN_2
 #define SPEAKER_GPIO_Port       GPIOA
@@ -91,7 +92,11 @@
 // #define UI_QUEUE_TIMEOUT    200     /** ALWAYS less than any timer interval !!! */
 // #define COMM_QUEUE_TIMEOUT  200     /** ALWAYS less than any timer interval !!! */
 
-extern QueueHandle_t xUIEventQueue;
+// extern QueueHandle_t xUIEventQueue;
+
+extern FATFS flashFileSystem;	// 0:/
+extern FATFS sdFileSystem;		// 1:/
+extern FATFS usbFileSystem;		// 2:/
 
 #endif /* __MKS_CONF_H */
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/

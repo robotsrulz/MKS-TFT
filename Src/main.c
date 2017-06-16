@@ -54,6 +54,10 @@ DMA_HandleTypeDef hdma_usart2_rx;
 
 TIM_HandleTypeDef htim2;
 
+FATFS flashFileSystem;	// 0:/
+FATFS sdFileSystem;		// 1:/
+FATFS usbFileSystem;	// 2:/
+
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -94,14 +98,12 @@ void StartServiceTask(void const * argument);
 
 // void StartComm1Task(void const * argument);
 // void StartComm2Task(void const * argument);
-// void StartSDHandlerTask(void const * argument);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-// static SemaphoreHandle_t xTouchSemaphore;
-// static SemaphoreHandle_t xSDSemaphore;
+static SemaphoreHandle_t xSDSemaphore;
 // static SemaphoreHandle_t xComm1Semaphore;
 // static SemaphoreHandle_t xComm2Semaphore;
 
@@ -128,13 +130,9 @@ int main(void)
 	MX_FATFS_Init();
 	MX_USB_HOST_Init();
 
-//	xTouchSemaphore = xSemaphoreCreateBinary();
-//	xSDSemaphore    = xSemaphoreCreateBinary();
+	xSDSemaphore    = xSemaphoreCreateBinary();
 //	xComm1Semaphore = xSemaphoreCreateBinary();
 //	xComm2Semaphore = xSemaphoreCreateBinary();
-
-//	osThreadDef(sdcardHandlerTask, StartSDHandlerTask, osPriorityNormal, 0,	128);
-//	sdcardHandlerHandle = osThreadCreate(osThread(sdcardHandlerTask), NULL);
 
 //	osThreadDef(comm1Task, StartComm1Task, osPriorityNormal, 0,	512);
 //	comm1TaskHandle = osThreadCreate(osThread(comm1Task), NULL);
@@ -145,7 +143,7 @@ int main(void)
 	osThreadDef(serviceHandlerTask, StartServiceTask, osPriorityNormal, 0, 128);
 	serviceTaskHandle = osThreadCreate(osThread(serviceHandlerTask), NULL);
 
-	osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 14 * 1024 / 4);
+	osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 12 * 1024 / 4);
 	uiTaskHandle = osThreadCreate(osThread(uiTask), NULL);
 
 //	xUIEventQueue = xQueueCreate(UI_QUEUE_SIZE, sizeof(xUIEvent_t));
@@ -472,13 +470,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	switch (GPIO_Pin) {
-	case TOUCH_DI_Pin:
-//		xSemaphoreGiveFromISR(xTouchSemaphore, &xHigherPriorityTaskWoken);
-		break;
 
 	case SDCARD_DETECT_Pin:
-//		xSemaphoreGiveFromISR(xSDSemaphore, &xHigherPriorityTaskWoken);
+		xSemaphoreGiveFromISR(xSDSemaphore, &xHigherPriorityTaskWoken);
 		break;
+
 	default:
 		break;
 	}
@@ -486,30 +482,33 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void StartServiceTask(void const * argument) {
 
+    BYTE power;
+    f_mount(&flashFileSystem, SPIFL_Path, 1);  // mount flash
+
+    if (GPIO_PIN_RESET == HAL_GPIO_ReadPin(SDCARD_DETECT_GPIO_Port, SDCARD_DETECT_Pin))
+        f_mount(&sdFileSystem, SPISD_Path, 1);
+
 	while (1) {
    		BuzzerCheckStop();
-        osDelay(1);
+
+		if (xSemaphoreTake(xSDSemaphore, 1) == pdTRUE) {
+            switch (HAL_GPIO_ReadPin(SDCARD_DETECT_GPIO_Port, SDCARD_DETECT_Pin)) {
+            case GPIO_PIN_RESET:
+                f_mount(&sdFileSystem, SPISD_Path, 1);
+                break;
+
+            default:
+                f_mount(NULL, SPISD_Path, 1);
+
+                power = 0;
+                (*SPISD_Driver.disk_ioctl)(0, CTRL_POWER, &power);
+                break;
+            }
+		}
 	}
 }
 
 /*
-
-void StartSDHandlerTask(void const * argument) {
-
-	while (1) {
-
-		if (xSemaphoreTake(xSDSemaphore, portMAX_DELAY ) == pdTRUE) {
-
-			osDelay(100);
-
-//			xUIEvent_t event;
-//			event.ucEventID =
-//					(HAL_GPIO_ReadPin(SDCARD_DETECT_GPIO_Port, SDCARD_DETECT_Pin)
-//							== GPIO_PIN_RESET) ? SDCARD_INSERT : SDCARD_REMOVE;
-//			xQueueSendToBack(xUIEventQueue, &event, UI_QUEUE_TIMEOUT);
-		}
-	}
-}
 
 void StartComm1Task(void const * argument) {
 
