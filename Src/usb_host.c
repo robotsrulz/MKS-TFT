@@ -76,17 +76,13 @@ void MX_USB_HOST_Init(void)
 static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 {
     /* USER CODE BEGIN 2 */
-//     xUIEvent_t event;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	switch (id) {
 	case HOST_USER_DISCONNECTION:
-//		event.ucEventID = USBDRIVE_REMOVE;
-//		xQueueSendToBackFromISR(xUIEventQueue, &event, pdFALSE);
-		break;
-
 	case HOST_USER_CLASS_ACTIVE:
-//		event.ucEventID = USBDRIVE_INSERT;
-//		xQueueSendToBackFromISR(xUIEventQueue, &event, pdFALSE);
+	    usbEvent = id;
+		xSemaphoreGiveFromISR(xUSBSemaphore, &xHigherPriorityTaskWoken);
 		break;
 
 	case HOST_USER_CONNECTION:

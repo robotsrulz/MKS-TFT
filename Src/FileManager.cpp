@@ -39,7 +39,9 @@ namespace FileManager
 	static FileSet gcodeFilesList(evFile, filesRoot, true);
 	static FileSet macroFilesList(evMacro, macrosRoot, false);
 	static FileSet * null displayedFileSet = nullptr;
-	static uint8_t numVolumes = 1;								// how many SD card sockets we have (normally 1 or 2)
+
+	static uint8_t numVolumes = 1 + 3;
+	static uint8_t firstOnScrVol = 2;								// how many SD card sockets we have (normally 1 or 2)
 
 	// Return true if the second string is alphabetically greater then the first, case insensitive
 	static inline bool StringGreaterThan(const char* a, const char* b)
@@ -57,7 +59,14 @@ namespace FileManager
 	{
 		FileListUpdated();
 		UI::UpdateFilesListTitle(cardNumber, numVolumes, isFilesList);
-		SetPending();							// refresh the list of files
+
+        if (cardNumber < firstOnScrVol) {
+            SetPending();
+        }
+        else
+        {   // on-screen card selected
+            /// TBD
+        }
 	}
 
 	void FileSet::Reload(int whichList, const Path& dir, int errCode)
@@ -191,7 +200,15 @@ namespace FileManager
 		{
 			requestedPath.add(currentPath[i]);
 		}
-		SetPending();
+
+        if (requestedPath[0] - '0' < firstOnScrVol)
+        {
+            SetPending();
+        }
+        else
+        {   // on-screen card selected
+            /// TBD
+        }
 	}
 
 	// Build a subdirectory of the current path
@@ -206,15 +223,23 @@ namespace FileManager
 			requestedPath.add('/');
 		}
 		requestedPath.catFrom(dir);
-		SetPending();
+
+        if (requestedPath[0] - '0' < firstOnScrVol)
+        {
+            SetPending();
+        }
+        else
+        {   // on-screen card selected
+            /// TBD
+        }
 	}
 
 	// Use the timer to send a command and repeat it if no response is received
 	void FileSet::SetPending()
 	{
-		timer.SetCommand(((GetFirmwareFeatures() & noM20M36) != 0) ? "M408 S20 P" : "M20 S2 P");
-		timer.SetArgument(CondStripDrive(requestedPath.c_str()));
-		timer.SetPending();
+        timer.SetCommand(((GetFirmwareFeatures() & noM20M36) != 0) ? "M408 S20 P" : "M20 S2 P");
+        timer.SetArgument(CondStripDrive(requestedPath.c_str()));
+        timer.SetPending();
 	}
 
 	// Select the next SD card
@@ -248,13 +273,27 @@ namespace FileManager
 			}
 			else
 			{
+			    if (cardNum < firstOnScrVol) {
 				// Send a command to mount the removable card. RepRapFirmware will ignore it if the card is already mounted and there are any files open on it.
-				SerialIo::SendString("M21 P");
-				SerialIo::SendInt(cardNumber);
-				SerialIo::SendChar('\n');
+                    SerialIo::SendString("M21 P");
+                    SerialIo::SendInt(cardNumber);
+                    SerialIo::SendChar('\n');
+			    }
+			    else
+                {   // on-screen card selected
+
+                }
 				requestedPath.printf("%u:", (unsigned int)cardNumber);
 			}
-			SetPending();
+
+			if (cardNum < firstOnScrVol) {
+                SetPending();
+			}
+			else
+            {   // on-screen card selected
+                /// TBD
+            }
+
 			return true;
 		}
 		return false;
@@ -444,7 +483,8 @@ namespace FileManager
 	{
 		if (n > 0 && n <= 10)
 		{
-			numVolumes = n;
+			numVolumes = n + 3;
+			firstOnScrVol = n + 1;
 		}
 	}
 

@@ -103,7 +103,10 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
-static SemaphoreHandle_t xSDSemaphore;
+SemaphoreHandle_t xSDSemaphore;
+SemaphoreHandle_t xUSBSemaphore;
+volatile uint8_t usbEvent;
+
 // static SemaphoreHandle_t xComm1Semaphore;
 // static SemaphoreHandle_t xComm2Semaphore;
 
@@ -131,6 +134,8 @@ int main(void)
 	MX_USB_HOST_Init();
 
 	xSDSemaphore    = xSemaphoreCreateBinary();
+	xUSBSemaphore   = xSemaphoreCreateBinary();
+
 //	xComm1Semaphore = xSemaphoreCreateBinary();
 //	xComm2Semaphore = xSemaphoreCreateBinary();
 
@@ -504,6 +509,18 @@ void StartServiceTask(void const * argument) {
                 (*SPISD_Driver.disk_ioctl)(0, CTRL_POWER, &power);
                 break;
             }
+		}
+
+		if (xSemaphoreTake(xUSBSemaphore, 1) == pdTRUE) {
+			switch (usbEvent) {
+            case HOST_USER_DISCONNECTION:
+            case HOST_USER_CLASS_ACTIVE:
+                f_mount((HOST_USER_DISCONNECTION == usbEvent) ? NULL : &usbFileSystem, USBH_Path, 1);
+                break;
+
+            default:
+                break;
+			}
 		}
 	}
 }

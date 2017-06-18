@@ -98,5 +98,8 @@ extern FATFS flashFileSystem;	// 0:/
 extern FATFS sdFileSystem;		// 1:/
 extern FATFS usbFileSystem;		// 2:/
 
+extern SemaphoreHandle_t xUSBSemaphore;
+extern volatile uint8_t usbEvent;
+
 #endif /* __MKS_CONF_H */
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/
