@@ -30,6 +30,8 @@ namespace FileManager
 		const bool isFilesList;			// true for a file list, false for a macro list
 		uint8_t cardNumber;
 
+		void GetLocalFileList(const Path path);
+
 	public:
 		FileSet(Event fe, const char * array rootDir, bool pIsFilesList);
 		void Display();
@@ -78,6 +80,8 @@ namespace FileManager
 	bool SelectCard(unsigned int cardNum);
 	void SetNumVolumes(size_t n);
 	void FirmwareFeaturesChanged();
+	void GetLocalFileInfo(const char * array dir, const char * array file);
+	const uint8_t GetFirstOnScrVol();
 }
 
 #endif /* FILEMANAGER_H_ */

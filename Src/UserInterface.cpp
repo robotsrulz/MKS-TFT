@@ -7,6 +7,8 @@
 
 #ifndef OEM_LAYOUT
 
+#include <ctype.h>
+
 #include "UserInterface.h"
 #include "PanelDue.h"
 #include "FileManager.h"
@@ -1579,10 +1581,19 @@ namespace UI
 						{
 							// It's a regular file
 							currentFile = fileName;
-							SerialIo::SendString(((GetFirmwareFeatures() & noM20M36) == 0) ? "M36 " : "M408 S36 P");			// ask for the file info
-							SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
-							SerialIo::SendChar('\n');
-							FileSelected(currentFile);
+                            FileSelected(currentFile);
+
+                            if (isdigit(FileManager::GetFilesDir()[0])
+                                        && FileManager::GetFilesDir()[0] - '0' < FileManager::GetFirstOnScrVol()) {
+
+                                SerialIo::SendString(((GetFirmwareFeatures() & noM20M36) == 0) ? "M36 " : "M408 S36 P");			// ask for the file info
+                                SerialIo::SendFilename(CondStripDrive(FileManager::GetFilesDir()), currentFile);
+                                SerialIo::SendChar('\n');
+
+                            }
+                            else
+                                FileManager::GetLocalFileInfo(FileManager::GetFilesDir(), currentFile);
+
 							mgr.SetPopup(filePopup, AutoPlace, AutoPlace);
 						}
 					}

@@ -208,7 +208,7 @@ namespace FileManager
         }
         else
         {   // on-screen card selected
-            /// TBD
+            GetLocalFileList(requestedPath);
         }
 	}
 
@@ -231,7 +231,7 @@ namespace FileManager
         }
         else
         {   // on-screen card selected
-            /// TBD
+            GetLocalFileList(requestedPath);
         }
 	}
 
@@ -283,40 +283,56 @@ namespace FileManager
 			}
 			else
             {   // on-screen card selected
-                /// TBD
-                BeginReceivingFiles();
-                requestedPath.printf("%u:/gcodes", (unsigned int)cardNumber - firstOnScrVol);
-                ReceiveDirectoryName(requestedPath.c_str());
-
-                DIR dir;
-                FRESULT res = f_opendir(&dir, requestedPath.c_str()); /* Open the directory */
-
-                if (res == FR_OK) {
-
-                    FILINFO *pFno;
-
-                    if ((pFno = (FILINFO *)pvPortMalloc(sizeof(FILINFO))) != NULL) {
-
-                        while (FR_OK == f_readdir(&dir, pFno) && pFno->fname[0]) {
-
-                            if (pFno->fattrib & AM_DIR)
-                                continue;
-
-                            ReceiveFile(pFno->fname);
-                        }
-
-                        vPortFree(pFno);
-                    }
-                    f_closedir(&dir);
-                }
-
-                SetIndex(0);
-                FileListUpdated();
+                requestedPath.printf("%u:", (unsigned int)cardNumber);
+                GetLocalFileList(requestedPath);
             }
 
 			return true;
 		}
 		return false;
+	}
+
+	void FileSet::GetLocalFileList(const Path path)
+	{
+        BeginReceivingFiles();
+
+        char *tempPath = (char *)pvPortMalloc(requestedPath.size() + 1);
+        if (!tempPath)
+            return;
+
+        strcpy(tempPath, requestedPath.c_str());
+        tempPath[0] -= firstOnScrVol;
+
+        ReceiveDirectoryName(requestedPath.c_str());
+
+        DIR dir;
+        FRESULT res = f_opendir(&dir, tempPath); /* Open the directory */
+
+        if (res == FR_OK) {
+
+            FILINFO *pFno;
+
+            if ((pFno = (FILINFO *)pvPortMalloc(sizeof(FILINFO))) != NULL) {
+
+                while (FR_OK == f_readdir(&dir, pFno) && pFno->fname[0]) {
+
+                    Path path;
+                    if (pFno->fattrib & AM_DIR)
+                        path.add('*');
+
+                    path.catFrom(pFno->fname);
+                    ReceiveFile(path.c_str());
+                }
+                vPortFree(pFno);
+            }
+            f_closedir(&dir);
+        }
+
+        SetIndex(0);
+        SetPath(requestedPath.c_str());
+        FileListUpdated();
+
+        vPortFree(tempPath);
 	}
 
 	void FileSet::SetupRootPath()
@@ -512,6 +528,28 @@ namespace FileManager
 	void FirmwareFeaturesChanged()
 	{
 		gcodeFilesList.FirmwareFeaturesChanged();
+	}
+
+	const uint8_t GetFirstOnScrVol()
+	{
+	    return firstOnScrVol;
+	}
+
+	void GetLocalFileInfo(const char * array dir, const char * array file)
+	{
+        FileManager::Path path;
+        path.printf("%s/%s", dir, file);
+
+        FILINFO *pFno;
+
+        if ((pFno = (FILINFO *)pvPortMalloc(sizeof(FILINFO))) != NULL) {
+
+            ((char *) path.c_str())[0] -= GetFirstOnScrVol();
+            if (FR_OK == f_stat(path.c_str(), pFno))
+                UI::UpdateFileSize(pFno->fsize);
+
+            vPortFree(pFno);
+        }
 	}
 }		// end namespace
 
