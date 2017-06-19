@@ -6,6 +6,7 @@
  */
 
 #include <ctype.h>
+#include "fatfs.h"
 
 #include "FileManager.h"
 #include "PanelDue.h"
@@ -41,7 +42,7 @@ namespace FileManager
 	static FileSet * null displayedFileSet = nullptr;
 
 	static uint8_t numVolumes = 1 + 3;
-	static uint8_t firstOnScrVol = 2;								// how many SD card sockets we have (normally 1 or 2)
+	static uint8_t firstOnScrVol = 1;								// how many SD card sockets we have (normally 1 or 2)
 
 	// Return true if the second string is alphabetically greater then the first, case insensitive
 	static inline bool StringGreaterThan(const char* a, const char* b)
@@ -271,27 +272,46 @@ namespace FileManager
 			{
 				SetupRootPath();
 			}
-			else
-			{
-			    if (cardNum < firstOnScrVol) {
-				// Send a command to mount the removable card. RepRapFirmware will ignore it if the card is already mounted and there are any files open on it.
-                    SerialIo::SendString("M21 P");
-                    SerialIo::SendInt(cardNumber);
-                    SerialIo::SendChar('\n');
-			    }
-			    else
-                {   // on-screen card selected
+			else if (cardNum < firstOnScrVol) {
+            // Send a command to mount the removable card. RepRapFirmware will ignore it if the card is already mounted and there are any files open on it.
+                SerialIo::SendString("M21 P");
+                SerialIo::SendInt(cardNumber);
+                SerialIo::SendChar('\n');
 
-                }
-				requestedPath.printf("%u:", (unsigned int)cardNumber);
-			}
-
-			if (cardNum < firstOnScrVol) {
+                requestedPath.printf("%u:", (unsigned int)cardNumber);
                 SetPending();
 			}
 			else
             {   // on-screen card selected
                 /// TBD
+                BeginReceivingFiles();
+                requestedPath.printf("%u:/gcodes", (unsigned int)cardNumber - firstOnScrVol);
+                ReceiveDirectoryName(requestedPath.c_str());
+
+                DIR dir;
+                FRESULT res = f_opendir(&dir, requestedPath.c_str()); /* Open the directory */
+
+                if (res == FR_OK) {
+
+                    FILINFO *pFno;
+
+                    if ((pFno = (FILINFO *)pvPortMalloc(sizeof(FILINFO))) != NULL) {
+
+                        while (FR_OK == f_readdir(&dir, pFno) && pFno->fname[0]) {
+
+                            if (pFno->fattrib & AM_DIR)
+                                continue;
+
+                            ReceiveFile(pFno->fname);
+                        }
+
+                        vPortFree(pFno);
+                    }
+                    f_closedir(&dir);
+                }
+
+                SetIndex(0);
+                FileListUpdated();
             }
 
 			return true;
