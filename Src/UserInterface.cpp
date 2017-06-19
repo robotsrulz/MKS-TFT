@@ -1641,9 +1641,19 @@ namespace UI
 				mgr.ClearPopup();			// clear the file list popup
 				if (currentFile != nullptr)
 				{
-					SerialIo::SendString("M32 ");
-					SerialIo::SendFilename(CondStripDrive(StripPrefix(FileManager::GetFilesDir())), currentFile);
-					SerialIo::SendChar('\n');
+				    if (isdigit(FileManager::GetFilesDir()[0])
+                                        && FileManager::GetFilesDir()[0] - '0' < FileManager::GetFirstOnScrVol())
+                    {
+
+                        SerialIo::SendString("M32 ");
+                        SerialIo::SendFilename(CondStripDrive(StripPrefix(FileManager::GetFilesDir())), currentFile);
+                        SerialIo::SendChar('\n');
+                    }
+                    else
+                    {
+                        /// TBD: local printing!!!
+                    }
+
 					PrintingFilenameChanged(currentFile);
 					currentFile = nullptr;							// allow the file list to be updated
 					CurrentButtonReleased();
