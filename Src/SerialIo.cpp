@@ -13,8 +13,16 @@
 #include "PanelDue.h"
 
 extern UART_HandleTypeDef huart2;
+extern uint8_t comm1RxString[];
 
 extern "C" void Error_Handler(void);
+
+// Receive data processing
+const size_t rxBufsize = 2048;
+static volatile char rxBuffer[rxBufsize];
+static volatile size_t nextIn = 0;
+static size_t nextOut = 0;
+static bool inError = false;
 
 namespace SerialIo
 {
@@ -29,6 +37,18 @@ namespace SerialIo
 	const char* array trCedilla =		"C\xC7" "c\xE7";
 
 	// Initialize the serial I/O subsystem, or re-initialize it with a new baud rate
+	uint16_t numChars = 0;
+	uint8_t checksum = 0;
+
+	// Send a character to the 3D printer.
+	// A typical command string is only about 12 characters long, which at 115200 baud takes just over 1ms to send.
+	// So there is no particular reason to use interrupts, and by so doing so we avoid having to handle buffer full situations.
+	void RawSendChar(char c)
+	{
+	    HAL_UART_Transmit(&huart2, (uint8_t *)&c, 1, 1000);
+		// while(HAL_UART_Transmit(&huart2, &c, 1, 1000) != HAL_OK) { }
+	}
+
 	void Init(uint32_t baudRate)
 	{
 	    /* USART2 init function */
@@ -46,18 +66,11 @@ namespace SerialIo
         {
             Error_Handler();
         }
-	}
 
-	uint16_t numChars = 0;
-	uint8_t checksum = 0;
+        RawSendChar('\n');
 
-	// Send a character to the 3D printer.
-	// A typical command string is only about 12 characters long, which at 115200 baud takes just over 1ms to send.
-	// So there is no particular reason to use interrupts, and by so doing so we avoid having to handle buffer full situations.
-	void RawSendChar(char c)
-	{
-	    HAL_UART_Transmit(&huart2, (uint8_t *)&c, 1, 1000);
-		// while(HAL_UART_Transmit(&huart2, &c, 1, 1000) != HAL_OK) { }
+        __HAL_UART_FLUSH_DRREGISTER(&huart2);
+        HAL_UART_Receive_DMA(&huart2, comm1RxString, 0x100);
 	}
 
 	void SendCharAndChecksum(char c)
@@ -147,13 +160,6 @@ namespace SerialIo
 		}
 		SendChar((char)((char)i + '0'));
 	}
-
-	// Receive data processing
-	const size_t rxBufsize = 2048;
-	static volatile char rxBuffer[rxBufsize];
-	static volatile size_t nextIn = 0;
-	static size_t nextOut = 0;
-	static bool inError = false;
 
 	// Enumeration to represent the json parsing state.
 	// We don't allow nested objects or nested arrays, so we don't need a state stack.
@@ -648,10 +654,13 @@ namespace SerialIo
 			}
 		}
 	}
+}
+
+extern "C" {
 
 	// Called by the ISR to store a received character.
 	// If the buffer is full, we wait for the next end-of-line.
-	void receiveChar(char c)
+	void huart2ReceiveChar(char c)
 	{
 		if (c == '\n')
 		{
@@ -671,26 +680,6 @@ namespace SerialIo
 			}
 		}
 	}
-
-	// Called by the ISR to signify an error. We wait for the next end of line.
-	void receiveError()
-	{
-		inError = true;
-	}
-}
-
-extern "C" {
-
-    extern uint8_t comm1RxBuffer;
-
-	void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-    {
-        if (huart->Instance == USART2)
-        {
-            __HAL_UART_FLUSH_DRREGISTER(&huart2); // Clear the buffer to prevent overrun
-            SerialIo::receiveChar(comm1RxBuffer);
-        }
-    }
 
 };
 

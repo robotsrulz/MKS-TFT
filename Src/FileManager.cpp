@@ -520,7 +520,7 @@ namespace FileManager
 		if (n > 0 && n <= 10)
 		{
 			numVolumes = n + 3;
-			firstOnScrVol = n + 1;
+			firstOnScrVol = n;
 		}
 	}
 
