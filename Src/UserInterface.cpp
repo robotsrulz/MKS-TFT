@@ -670,8 +670,8 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	mgr.Show(printProgressBar, false);
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-	mgr.AddField(timeLeftField = new TextField(row9, margin, DISPLAY_X - 2 * margin, TextAlignment::Left, strings->timeRemaining));
-	mgr.Show(timeLeftField, false);
+	// mgr.AddField(timeLeftField = new TextField(row9, margin, DISPLAY_X - 2 * margin, TextAlignment::Left, strings->timeRemaining));
+	// mgr.Show(timeLeftField, false);
 
 	printRoot = mgr.GetRoot();
 }
@@ -1013,8 +1013,8 @@ namespace UI
 				timesLeftText.catFrom(strings->layer);
 				AppendTimeLeft(timesLeft[2]);
 			}
-			timeLeftField->SetValue(timesLeftText.c_str());
-			mgr.Show(timeLeftField, true);
+			// timeLeftField->SetValue(timesLeftText.c_str());
+			// mgr.Show(timeLeftField, true);
 		}
 	}
 
@@ -1137,7 +1137,7 @@ namespace UI
 		// Don't enable the time left field when we start printing, instead this will get enabled when we receive a suitable message
 		if (!PrintInProgress())
 		{
-			mgr.Show(timeLeftField, false);
+			// mgr.Show(timeLeftField, false);
 		}
 
 		statusField->SetValue(strings->statusValues[(unsigned int)GetStatus()]);

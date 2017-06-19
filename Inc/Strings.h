@@ -128,7 +128,7 @@ const StringTable LanguageTables[2] =
 		", layer ",							// note space at end
 		"n/a",
 		"Pause",
-		"Baby step",
+		"Babystep",
 		"Resume",
 		"Cancel",
 
@@ -157,7 +157,7 @@ const StringTable LanguageTables[2] =
 		"Speed (mm/s)",
 		"Extrude",
 		"Retract",
-		"Baby stepping",
+		"Babystep",
 		"Current Z offset: ",
 		"Message",
 		"Messages",
@@ -225,7 +225,7 @@ const StringTable LanguageTables[2] =
 		"n/a",
 		"Пауза",
 		"Микрошаг",
-		"Продолжить",
+		"Продолж",
 		"Отмена",
 
 		// Setup page
