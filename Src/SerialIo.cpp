@@ -19,8 +19,9 @@ extern "C" void Error_Handler(void);
 // Receive data processing
 #define MAXCOMM1SIZE    0x0800u             // Biggest string the user will type
 
-static uint8_t comm1RxString[MAXCOMM1SIZE]; // where we build our string from characters coming in
-static uint32_t comm1RxStringPtr = 0;
+static uint8_t       comm1RxString[MAXCOMM1SIZE]; // where we build our string from characters coming in
+static String<0xffu> comm1TxString;
+static uint32_t      comm1RxStringPtr = 0;
 
 namespace SerialIo
 {
@@ -35,17 +36,11 @@ namespace SerialIo
 	const char* array trCedilla =		"C\xC7" "c\xE7";
 
 	// Initialize the serial I/O subsystem, or re-initialize it with a new baud rate
-	uint16_t numChars = 0;
 	uint8_t checksum = 0;
 
 	// Send a character to the 3D printer.
 	// A typical command string is only about 12 characters long, which at 115200 baud takes just over 1ms to send.
 	// So there is no particular reason to use interrupts, and by so doing so we avoid having to handle buffer full situations.
-	void RawSendChar(char c)
-	{
-	    HAL_UART_Transmit(&huart2, (uint8_t *)&c, 1, 1000);
-		// while(HAL_UART_Transmit(&huart2, &c, 1, 1000) != HAL_OK) { }
-	}
 
 	void Init(uint32_t baudRate)
 	{
@@ -65,50 +60,67 @@ namespace SerialIo
             Error_Handler();
         }
 
-        RawSendChar('\n');
+        SendChar('\n');
 
         __HAL_UART_FLUSH_DRREGISTER(&huart2);
         HAL_UART_Receive_DMA(&huart2, comm1RxString, MAXCOMM1SIZE);
 	}
 
+	void FlushTxBuffer()
+	{
+        HAL_UART_Transmit(&huart2, (uint8_t *)comm1TxString.c_ptr(), comm1TxString.size(), 1000);
+        comm1TxString.clear();
+	}
+
 	void SendCharAndChecksum(char c)
 	{
 		checksum ^= c;
-		RawSendChar(c);
-		++numChars;
+		comm1TxString.add(c);
+
+		if (comm1TxString.full())
+		    FlushTxBuffer();
 	}
 
 	void SendChar(char c)
-	decrease(numChars == 0)
 	{
 		if (c == '\n')
 		{
-			if (numChars != 0)
+			if (comm1TxString.size())
 			{
 				// Send the checksum
-				RawSendChar('*');
+				comm1TxString.add('*');
+                if (comm1TxString.full())
+                    FlushTxBuffer();
+
 				char digit0 = checksum % 10 + '0';
 				checksum /= 10;
 				char digit1 = checksum % 10 + '0';
 				checksum /= 10;
 				if (checksum != 0)
 				{
-					RawSendChar(checksum + '0');
+					comm1TxString.add(checksum + '0');
+                    if (comm1TxString.full())
+                        FlushTxBuffer();
 				}
-				RawSendChar(digit1);
-				RawSendChar(digit0);
+				comm1TxString.add(digit1);
+                if (comm1TxString.full())
+                    FlushTxBuffer();
+
+				comm1TxString.add(digit0);
+                if (comm1TxString.full())
+                    FlushTxBuffer();
 			}
-			RawSendChar(c);
-			numChars = 0;
+			comm1TxString.add(c);
+			FlushTxBuffer();
 		}
 		else
 		{
-			if (numChars == 0)
+			if (!comm1TxString.size())
 			{
 				checksum = 0;
 				// Send a dummy line number
 				SendCharAndChecksum('N');
-				SendInt(lineNumber++);			// numChars is no longer zero, so only recurses once
+				SendInt(lineNumber++);
 				SendCharAndChecksum(' ');
 			}
 			SendCharAndChecksum(c);
