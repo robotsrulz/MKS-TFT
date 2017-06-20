@@ -71,13 +71,6 @@ static osThreadId serviceTaskHandle; // low latency tasks
 // QueueHandle_t xUIEventQueue;
 // QueueHandle_t xPCommEventQueue;
 
-#define MAXCOMM1SIZE    0xffu                       // Biggest string the user will type
-uint8_t comm1RxBuffer = '\000';                     // where we store that one character that just came in
-uint8_t comm1RxString[MAXCOMM1SIZE + 1];   // where we build our string from characters coming in
-static uint32_t comm1RxStringPtr = 0;
-
-void huart2ReceiveChar(char c);
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -524,14 +517,6 @@ void StartServiceTask(void const * argument) {
                 break;
 			}
 		}
-
-        if (huart2.hdmarx && huart2.hdmarx->Instance) {
-            while (comm1RxStringPtr != ((0x100 - huart2.hdmarx->Instance->CNDTR) & 0xffu)) {
-
-                huart2ReceiveChar(comm1RxString[comm1RxStringPtr++]);
-                comm1RxStringPtr &= 0xffu;
-            }
-        }
 	}
 }
 

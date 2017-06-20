@@ -13,16 +13,14 @@
 #include "PanelDue.h"
 
 extern UART_HandleTypeDef huart2;
-extern uint8_t comm1RxString[];
 
 extern "C" void Error_Handler(void);
 
 // Receive data processing
-const size_t rxBufsize = 2048;
-static volatile char rxBuffer[rxBufsize];
-static volatile size_t nextIn = 0;
-static size_t nextOut = 0;
-static bool inError = false;
+#define MAXCOMM1SIZE    0x0800u             // Biggest string the user will type
+
+static uint8_t comm1RxString[MAXCOMM1SIZE]; // where we build our string from characters coming in
+static uint32_t comm1RxStringPtr = 0;
 
 namespace SerialIo
 {
@@ -70,7 +68,7 @@ namespace SerialIo
         RawSendChar('\n');
 
         __HAL_UART_FLUSH_DRREGISTER(&huart2);
-        HAL_UART_Receive_DMA(&huart2, comm1RxString, 0x100);
+        HAL_UART_Receive_DMA(&huart2, comm1RxString, MAXCOMM1SIZE);
 	}
 
 	void SendCharAndChecksum(char c)
@@ -303,384 +301,360 @@ namespace SerialIo
 
 	void CheckInput()
 	{
-		while (nextIn != nextOut)
-		{
-			char c = rxBuffer[nextOut];
-			nextOut = (nextOut + 1) % rxBufsize;
-			if (c == '\n')
-			{
-				state = jsBegin;		// abandon current parse (if any) and start again
-			}
-			else
-			{
-				switch(state)
-				{
-				case jsBegin:			// initial state, expecting '{'
-					if (c == '{')
-					{
-						StartReceivedMessage();
-						state = jsExpectId;
-						fieldVal.clear();
-					}
-					break;
+        if (huart2.hdmarx && huart2.hdmarx->Instance) {
+            while (comm1RxStringPtr != ((MAXCOMM1SIZE - huart2.hdmarx->Instance->CNDTR) & (MAXCOMM1SIZE - 1))) {
 
-				case jsExpectId:		// expecting a quoted ID
-					switch (c)
-					{
-					case ' ':
-						break;
-					case '"':
-						fieldId.clear();
-						state = jsId;
-						break;
-					case '}':
-						EndReceivedMessage();
-						state = jsBegin;
-						break;
-					default:
-						state = jsError;
-						break;
-					}
-					break;
+                char c = comm1RxString[comm1RxStringPtr++];
+                comm1RxStringPtr &= (MAXCOMM1SIZE - 1);
 
-				case jsId:				// expecting an identifier, or in the middle of one
-					switch (c)
-					{
-					case '"':
-						state = jsHadId;
-						break;
-					default:
-						if (c >= ' ' && !fieldId.full())
-						{
-							fieldId.add(c);
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					}
-					break;
+                if (c == '\n')
+                {
+                    state = jsBegin;		// abandon current parse (if any) and start again
+                }
+                else
+                {
+                    switch(state)
+                    {
+                    case jsBegin:			// initial state, expecting '{'
+                        if (c == '{')
+                        {
+                            StartReceivedMessage();
+                            state = jsExpectId;
+                            fieldVal.clear();
+                        }
+                        break;
 
-				case jsHadId:			// had a quoted identifier, expecting ':'
-					switch(c)
-					{
-					case ':':
-						arrayElems = -1;
-						state = jsVal;
-						break;
-					case ' ':
-						break;
-					default:
-						state = jsError;
-						break;
-					}
-					break;
+                    case jsExpectId:		// expecting a quoted ID
+                        switch (c)
+                        {
+                        case ' ':
+                            break;
+                        case '"':
+                            fieldId.clear();
+                            state = jsId;
+                            break;
+                        case '}':
+                            EndReceivedMessage();
+                            state = jsBegin;
+                            break;
+                        default:
+                            state = jsError;
+                            break;
+                        }
+                        break;
 
-				case jsVal:				// had ':' or ':[', expecting value
-					switch(c)
-					{
-					case ' ':
-						break;
-					case '"':
-						fieldVal.clear();
-						state = jsStringVal;
-						break;
-					case '[':
-						if (arrayElems == -1)	// if not already readuing an array
-						{
-							arrayElems = 0;		// start an array
-						}
-						else
-						{
-							state = jsError;	// we don't support nested arrays
-						}
-						break;
-					case ']':
-						if (arrayElems == 0)
-						{
-							EndArray();			// empty array
-							state = jsEndVal;
-						}
-						else
-						{
-							state = jsError;	// ']' received without a matching '[' first
-						}
-						break;
-					case '-':
-						fieldVal.clear();
-						fieldVal.add(c);
-						state = jsNegIntVal;
-						break;
-					default:
-						if (c >= '0' && c <= '9')
-						{
-							fieldVal.clear();
-							fieldVal.add(c);
-							state = jsIntVal;
-							break;
-						}
-						else
-						{
-							state = jsError;
-						}
-					}
-					break;
+                    case jsId:				// expecting an identifier, or in the middle of one
+                        switch (c)
+                        {
+                        case '"':
+                            state = jsHadId;
+                            break;
+                        default:
+                            if (c >= ' ' && !fieldId.full())
+                            {
+                                fieldId.add(c);
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        }
+                        break;
 
-				case jsStringVal:		// just had '"' and expecting a string value
-					switch (c)
-					{
-					case '"':
-						ConvertUnicode();
-						ProcessField();
-						state = jsEndVal;
-						break;
-					case '\\':
-						state = jsStringEscape;
-						break;
-					default:
-						if (c < ' ')
-						{
-							state = jsError;
-						}
-						else if (!fieldVal.full())
-						{
-							fieldVal.add(c);
-						}
-						break;
-					}
-					break;
+                    case jsHadId:			// had a quoted identifier, expecting ':'
+                        switch(c)
+                        {
+                        case ':':
+                            arrayElems = -1;
+                            state = jsVal;
+                            break;
+                        case ' ':
+                            break;
+                        default:
+                            state = jsError;
+                            break;
+                        }
+                        break;
 
-				case jsStringEscape:	// just had backslash in a string
-					if (!fieldVal.full())
-					{
-						switch (c)
-						{
-						case '"':
-						case '\\':
-						case '/':
-							fieldVal.add(c);
-							break;
-						case 'n':
-						case 't':
-							fieldVal.add(' ');		// replace newline and tab by space
-							break;
-						case 'b':
-						case 'f':
-						case 'r':
-						default:
-							break;
-						}
-					}
-					state = jsStringVal;
-					break;
+                    case jsVal:				// had ':' or ':[', expecting value
+                        switch(c)
+                        {
+                        case ' ':
+                            break;
+                        case '"':
+                            fieldVal.clear();
+                            state = jsStringVal;
+                            break;
+                        case '[':
+                            if (arrayElems == -1)	// if not already readuing an array
+                            {
+                                arrayElems = 0;		// start an array
+                            }
+                            else
+                            {
+                                state = jsError;	// we don't support nested arrays
+                            }
+                            break;
+                        case ']':
+                            if (arrayElems == 0)
+                            {
+                                EndArray();			// empty array
+                                state = jsEndVal;
+                            }
+                            else
+                            {
+                                state = jsError;	// ']' received without a matching '[' first
+                            }
+                            break;
+                        case '-':
+                            fieldVal.clear();
+                            fieldVal.add(c);
+                            state = jsNegIntVal;
+                            break;
+                        default:
+                            if (c >= '0' && c <= '9')
+                            {
+                                fieldVal.clear();
+                                fieldVal.add(c);
+                                state = jsIntVal;
+                                break;
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                        }
+                        break;
 
-				case jsNegIntVal:		// had '-' so expecting a integer value
-					if (c >= '0' && c <= '9')
-					{
-						fieldVal.add(c);
-						state = jsIntVal;
-					}
-					else
-					{
-						state = jsError;
-					}
-					break;
+                    case jsStringVal:		// just had '"' and expecting a string value
+                        switch (c)
+                        {
+                        case '"':
+                            ConvertUnicode();
+                            ProcessField();
+                            state = jsEndVal;
+                            break;
+                        case '\\':
+                            state = jsStringEscape;
+                            break;
+                        default:
+                            if (c < ' ')
+                            {
+                                state = jsError;
+                            }
+                            else if (!fieldVal.full())
+                            {
+                                fieldVal.add(c);
+                            }
+                            break;
+                        }
+                        break;
 
-				case jsIntVal:			// receiving an integer value
-					switch(c)
-					{
-					case '.':
-						if (fieldVal.full())
-						{
-							state = jsError;
-						}
-						else
-						{
-							fieldVal.add(c);
-							state = jsFracVal;
-						}
-						break;
-					case ',':
-						ProcessField();
-						if (arrayElems >= 0)
-						{
-							++arrayElems;
-							state = jsVal;
-						}
-						else
-						{
-							state = jsExpectId;
-						}
-						break;
-					case ']':
-						if (arrayElems >= 0)
-						{
-							ProcessField();
-							++arrayElems;
-							EndArray();
-							state = jsEndVal;
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					case '}':
-						if (arrayElems == -1)
-						{
-							ProcessField();
-							EndReceivedMessage();
-							state = jsBegin;
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					default:
-						if (c >= '0' && c <= '9' && !fieldVal.full())
-						{
-							fieldVal.add(c);
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					}
-					break;
+                    case jsStringEscape:	// just had backslash in a string
+                        if (!fieldVal.full())
+                        {
+                            switch (c)
+                            {
+                            case '"':
+                            case '\\':
+                            case '/':
+                                fieldVal.add(c);
+                                break;
+                            case 'n':
+                            case 't':
+                                fieldVal.add(' ');		// replace newline and tab by space
+                                break;
+                            case 'b':
+                            case 'f':
+                            case 'r':
+                            default:
+                                break;
+                            }
+                        }
+                        state = jsStringVal;
+                        break;
 
-				case jsFracVal:			// receiving a fractional value
-					switch(c)
-					{
-					case ',':
-						ProcessField();
-						if (arrayElems >= 0)
-						{
-							++arrayElems;
-							state = jsVal;
-						}
-						else
-						{
-							state = jsExpectId;
-						}
-						break;
-					case ']':
-						if (arrayElems >= 0)
-						{
-							ProcessField();
-							++arrayElems;
-							EndArray();
-							state = jsEndVal;
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					case '}':
-						if (arrayElems == -1)
-						{
-							ProcessField();
-							EndReceivedMessage();
-							state = jsBegin;
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					default:
-						if (c >= '0' && c <= '9' && !fieldVal.full())
-						{
-							fieldVal.add(c);
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					}
-					break;
+                    case jsNegIntVal:		// had '-' so expecting a integer value
+                        if (c >= '0' && c <= '9')
+                        {
+                            fieldVal.add(c);
+                            state = jsIntVal;
+                        }
+                        else
+                        {
+                            state = jsError;
+                        }
+                        break;
 
-				case jsEndVal:			// had the end of a string or array value, expecting comma or ] or }
-					switch (c)
-					{
-					case ',':
-						if (arrayElems >= 0)
-						{
-							++arrayElems;
-							fieldVal.clear();
-							state = jsVal;
-						}
-						else
-						{
-							state = jsExpectId;
-						}
-						break;
-					case ']':
-						if (arrayElems >= 0)
-						{
-							++arrayElems;
-							EndArray();
-							state = jsEndVal;
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					case '}':
-						if (arrayElems == -1)
-						{
-							EndReceivedMessage();
-							state = jsBegin;
-						}
-						else
-						{
-							state = jsError;
-						}
-						break;
-					default:
-						break;
-					}
-					break;
+                    case jsIntVal:			// receiving an integer value
+                        switch(c)
+                        {
+                        case '.':
+                            if (fieldVal.full())
+                            {
+                                state = jsError;
+                            }
+                            else
+                            {
+                                fieldVal.add(c);
+                                state = jsFracVal;
+                            }
+                            break;
+                        case ',':
+                            ProcessField();
+                            if (arrayElems >= 0)
+                            {
+                                ++arrayElems;
+                                state = jsVal;
+                            }
+                            else
+                            {
+                                state = jsExpectId;
+                            }
+                            break;
+                        case ']':
+                            if (arrayElems >= 0)
+                            {
+                                ProcessField();
+                                ++arrayElems;
+                                EndArray();
+                                state = jsEndVal;
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        case '}':
+                            if (arrayElems == -1)
+                            {
+                                ProcessField();
+                                EndReceivedMessage();
+                                state = jsBegin;
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        default:
+                            if (c >= '0' && c <= '9' && !fieldVal.full())
+                            {
+                                fieldVal.add(c);
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        }
+                        break;
 
-				case jsError:
-					// Ignore all characters. State will be reset to jsBegin at the start of this function when we receive a newline.
-					break;
-				}
-			}
-		}
+                    case jsFracVal:			// receiving a fractional value
+                        switch(c)
+                        {
+                        case ',':
+                            ProcessField();
+                            if (arrayElems >= 0)
+                            {
+                                ++arrayElems;
+                                state = jsVal;
+                            }
+                            else
+                            {
+                                state = jsExpectId;
+                            }
+                            break;
+                        case ']':
+                            if (arrayElems >= 0)
+                            {
+                                ProcessField();
+                                ++arrayElems;
+                                EndArray();
+                                state = jsEndVal;
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        case '}':
+                            if (arrayElems == -1)
+                            {
+                                ProcessField();
+                                EndReceivedMessage();
+                                state = jsBegin;
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        default:
+                            if (c >= '0' && c <= '9' && !fieldVal.full())
+                            {
+                                fieldVal.add(c);
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        }
+                        break;
+
+                    case jsEndVal:			// had the end of a string or array value, expecting comma or ] or }
+                        switch (c)
+                        {
+                        case ',':
+                            if (arrayElems >= 0)
+                            {
+                                ++arrayElems;
+                                fieldVal.clear();
+                                state = jsVal;
+                            }
+                            else
+                            {
+                                state = jsExpectId;
+                            }
+                            break;
+                        case ']':
+                            if (arrayElems >= 0)
+                            {
+                                ++arrayElems;
+                                EndArray();
+                                state = jsEndVal;
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        case '}':
+                            if (arrayElems == -1)
+                            {
+                                EndReceivedMessage();
+                                state = jsBegin;
+                            }
+                            else
+                            {
+                                state = jsError;
+                            }
+                            break;
+                        default:
+                            break;
+                        }
+                        break;
+
+                    case jsError:
+                        // Ignore all characters. State will be reset to jsBegin at the start of this function when we receive a newline.
+                        break;
+                    }
+                }
+            }
+        }
 	}
-}
-
-extern "C" {
-
-	// Called by the ISR to store a received character.
-	// If the buffer is full, we wait for the next end-of-line.
-	void huart2ReceiveChar(char c)
-	{
-		if (c == '\n')
-		{
-			inError = false;
-		}
-		if (!inError)
-		{
-			size_t temp = (nextIn + 1) % rxBufsize;
-			if (temp == nextOut)
-			{
-				inError = true;
-			}
-			else
-			{
-				rxBuffer[nextIn] = c;
-				nextIn = temp;
-			}
-		}
-	}
-
 };
 
 // End

@@ -19,7 +19,6 @@ namespace SerialIo
 	void SendInt(int i);
 	void CheckInput();
 }
-#else
 #endif
 
 #endif /* SERIALIO_H_ */
