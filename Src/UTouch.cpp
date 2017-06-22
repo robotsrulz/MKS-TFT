@@ -7,9 +7,8 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
+#include "mks_conf.h"
 #include "UTouch.h"
-
-extern SPI_HandleTypeDef hspi3;
 
 void UTouch::init(uint16_t xp, uint16_t yp, DisplayOrientation orientationAdjust)
 {
@@ -29,9 +28,9 @@ void UTouch::init(uint16_t xp, uint16_t yp, DisplayOrientation orientationAdjust
 	osDelay(50);
 
 	/* warmup */
-	HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
+	HAL_SPI_TransmitReceive(&hspi_touch, pTxData, pRxData, 3, 1000);
 	pTxData[0] = 0x94;
-	HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
+	HAL_SPI_TransmitReceive(&hspi_touch, pTxData, pRxData, 3, 1000);
 
 	// HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_SET);
 }
@@ -102,7 +101,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 	uint8_t pRxData[3];
 
 	/* warmup */
-	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);
+	HAL_SPI_Transmit(&hspi_touch, pTxData, 3, 1000);
 
 	const size_t numReadings = 6;
 	const uint16_t maxDiff = 70;					// needs to be big enough to handle jitter.
@@ -116,7 +115,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 	// Take enough readings to fill the ring buffer
 	for (size_t i = 0; i < numReadings; ++i)
 	{
-		HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
+		HAL_SPI_TransmitReceive(&hspi_touch, pTxData, pRxData, 3, 1000);
 		uint16_t val = (((uint16_t)pRxData[1] << 8) + pRxData[2]) >> 3;
 
 		ring[i] = val;
@@ -150,7 +149,7 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 		// Take another reading
 		sum -= ring[last];
 
-		HAL_SPI_TransmitReceive(&hspi3, pTxData, pRxData, 3, 1000);
+		HAL_SPI_TransmitReceive(&hspi_touch, pTxData, pRxData, 3, 1000);
 		uint16_t val = (((uint16_t)pRxData[1] << 8) + pRxData[2]) >> 3;
 
 		ring[last] = val;
@@ -159,9 +158,9 @@ bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 	}
 
 	pTxData[0] &= 0xF8;
-	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);
+	HAL_SPI_Transmit(&hspi_touch, pTxData, 3, 1000);
 	pTxData[0] = 0;
-	HAL_SPI_Transmit(&hspi3, pTxData, 3, 1000);	// read the final data
+	HAL_SPI_Transmit(&hspi_touch, pTxData, 3, 1000);	// read the final data
 	rslt = avg;
 	return ok;
 }

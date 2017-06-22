@@ -22,7 +22,10 @@
 #include <cctype>
 #include <cstdlib>
 
-#include "eeprom.h"
+#if defined(STM32F107xC) && defined(MKS_TFT)
+ #include "eeprom.h"
+#endif
+
 #include "Mem.h"
 #include "Display.h"
 #include "UTFT.h"
@@ -127,7 +130,10 @@ struct EEPROMData
 };
 
 // FlashData must fit in the area we have reserved
+#if defined(STM32F107xC) && defined(MKS_TFT)
 static_assert(sizeof(EEPROMData) <= EEPROM_SIZE, "Flash data too large");
+#endif
+
 EEPROMData nvData, savedNvData;
 
 static PrinterStatus status = PrinterStatus::connecting;
@@ -220,13 +226,17 @@ void EEPROMData::SetDefaults()
 void EEPROMData::Load()
 {
 	magic = 0xFFFFFFFF;				// to make sure we know if the read failed
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	readEEPROM(0, (uint8_t *)&(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
+#endif
 }
 
 // Save parameters to flash memory
 void EEPROMData::Save() const
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
     writeEEPROM(0, (uint8_t *)&(this->magic), &(this->dummy) - reinterpret_cast<const char*>(&(this->magic)));
+#endif
 }
 
 // Return the host firmware features
@@ -324,13 +334,17 @@ void ShortenTouchDelay()
 
 void TouchBeep()
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	Buzzer::Beep(touchBeepLength);
+#endif
 }
 
 void ErrorBeep()
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	while (Buzzer::Noisy()) { }
 	Buzzer::Beep(errorBeepLength);
+#endif
 }
 
 // Draw a spot and wait until the user touches it, returning the touch coordinates in tx and ty.
@@ -445,23 +459,27 @@ int GetBrightness()
 // Factory reset
 void FactoryReset()
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	while (Buzzer::Noisy()) { }
 	nvData.SetInvalid();
 	nvData.Save();
 	savedNvData = nvData;
 	Buzzer::Beep(400);		// long beep to acknowledge it
 	while (Buzzer::Noisy()) { }
+#endif
 	Restart();														// reset the processor
 }
 
 // Save settings
 void SaveSettings()
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	while (Buzzer::Noisy()) { }
 	nvData.Save();
 	// To make sure it worked, load the settings again
 	savedNvData.Load();
 	UI::CheckSettingsAreSaved();
+#endif
 }
 
 // This is called when the status changes
@@ -1161,6 +1179,7 @@ extern "C" int PanelDueMain(void)
 		mgr.Refresh(false);
 		ShowLine;
 
+#if defined(STM32F107xC) && defined(MKS_TFT)
 		// 5. Generate a beep if asked to
 		if (beepFrequency != 0 && beepLength != 0)
 		{
@@ -1175,7 +1194,7 @@ extern "C" int PanelDueMain(void)
 			beepFrequency = beepLength = 0;
 		}
 		ShowLine;
-
+#endif
 		// 6. If it is time, poll the printer status.
 		// When the printer is executing a homing move or other file macro, it may stop responding to polling requests.
 		// Under these conditions, we slow down the rate of polling to avoid building up a large queue of them.
@@ -1215,6 +1234,6 @@ void PrintDebugText(const char *x)
 }
 
 // Pure virtual function call handler, to avoid pulling in large chunks of the standard library
-// extern "C" void __cxa_pure_virtual() { while (1); }
+extern "C" void __cxa_pure_virtual() { while (1); }
 
 // End

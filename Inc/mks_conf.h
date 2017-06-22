@@ -39,34 +39,54 @@
 #include "cmsis_os.h"
 #include "fatfs.h"
 
-#define SPEAKER_Pin             GPIO_PIN_2
-#define SPEAKER_GPIO_Port       GPIOA
-#define FILAMENT_DI_Pin         GPIO_PIN_0
-#define FILAMENT_DI_GPIO_Port   GPIOB
-#define POWER_DI_Pin            GPIO_PIN_1
-#define POWER_DI_GPIO_Port      GPIOB
-#define LCD_nWR_Pin             GPIO_PIN_14
-#define LCD_nWR_GPIO_Port       GPIOB
-#define LCD_RS_Pin              GPIO_PIN_13
-#define LCD_RS_GPIO_Port        GPIOD
-#define LCD_BACKLIGHT_Pin       GPIO_PIN_14
-#define LCD_BACKLIGHT_GPIO_Port GPIOD
-#define LCD_nRD_Pin             GPIO_PIN_15
-#define LCD_nRD_GPIO_Port       GPIOD
-#define LCD_nCS_Pin             GPIO_PIN_8
-#define LCD_nCS_GPIO_Port       GPIOC
-#define SDCARD_nCS_Pin          GPIO_PIN_11
-#define SDCARD_nCS_GPIO_Port    GPIOD
-#define SDCARD_DETECT_Pin       GPIO_PIN_15
-#define SDCARD_DETECT_GPIO_Port GPIOB
-#define TOUCH_DI_Pin            GPIO_PIN_5
-#define TOUCH_DI_GPIO_Port      GPIOC
-#define TOUCH_nCS_Pin           GPIO_PIN_9
-#define TOUCH_nCS_GPIO_Port     GPIOC
-#define WIFI_DI_Pin             GPIO_PIN_9
-#define WIFI_DI_GPIO_Port       GPIOA
-#define FLASH_nCS_Pin           GPIO_PIN_9
-#define FLASH_nCS_GPIO_Port     GPIOB
+#if defined(STM32F107xC) && defined(MKS_TFT)
+/**
+ * Makerbase MKS-TFT32
+ */
+ #define SPEAKER_Pin             GPIO_PIN_2
+ #define SPEAKER_GPIO_Port       GPIOA
+ #define FILAMENT_DI_Pin         GPIO_PIN_0
+ #define FILAMENT_DI_GPIO_Port   GPIOB
+ #define POWER_DI_Pin            GPIO_PIN_1
+ #define POWER_DI_GPIO_Port      GPIOB
+ #define LCD_nWR_Pin             GPIO_PIN_14
+ #define LCD_nWR_GPIO_Port       GPIOB
+ #define LCD_RS_Pin              GPIO_PIN_13
+ #define LCD_RS_GPIO_Port        GPIOD
+ #define LCD_BACKLIGHT_Pin       GPIO_PIN_14
+ #define LCD_BACKLIGHT_GPIO_Port GPIOD
+ #define LCD_nRD_Pin             GPIO_PIN_15
+ #define LCD_nRD_GPIO_Port       GPIOD
+ #define LCD_nCS_Pin             GPIO_PIN_8
+ #define LCD_nCS_GPIO_Port       GPIOC
+ #define SDCARD_nCS_Pin          GPIO_PIN_11
+ #define SDCARD_nCS_GPIO_Port    GPIOD
+ #define SDCARD_DETECT_Pin       GPIO_PIN_15
+ #define SDCARD_DETECT_GPIO_Port GPIOB
+ #define TOUCH_DI_Pin            GPIO_PIN_5
+ #define TOUCH_DI_GPIO_Port      GPIOC
+ #define TOUCH_nCS_Pin           GPIO_PIN_9
+ #define TOUCH_nCS_GPIO_Port     GPIOC
+ #define WIFI_DI_Pin             GPIO_PIN_9
+ #define WIFI_DI_GPIO_Port       GPIOA
+ #define FLASH_nCS_Pin           GPIO_PIN_9
+ #define FLASH_nCS_GPIO_Port     GPIOB
+
+ extern SPI_HandleTypeDef hspi3;
+ #define hspi_touch (hspi3)
+
+#elif defined(STM32F103xE) && defined(CZMINI)
+ #define TOUCH_DI_Pin            GPIO_PIN_12
+ #define TOUCH_DI_GPIO_Port      GPIOB
+ #define TOUCH_nCS_Pin           GPIO_PIN_12
+ #define TOUCH_nCS_GPIO_Port     GPIOD
+ #define LCD_RESET_Pin           GPIO_PIN_1
+ #define LCD_RESET_GPIO_Port     GPIOE
+
+ extern SPI_HandleTypeDef hspi2;
+ #define hspi_touch (hspi2)
+
+#endif
 
 #define VERSION_TEXT		"1.17beta2R"
 

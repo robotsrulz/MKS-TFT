@@ -40,8 +40,11 @@ namespace FileManager
 	static FileSet gcodeFilesList(evFile, filesRoot, true);
 	static FileSet macroFilesList(evMacro, macrosRoot, false);
 	static FileSet * null displayedFileSet = nullptr;
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	static uint8_t numVolumes = 1 + 3;
+#elif defined(STM32F103xE) && defined(CZMINI)
+	static uint8_t numVolumes = 1 + 1;
+#endif
 	static uint8_t firstOnScrVol = 1;								// how many SD card sockets we have (normally 1 or 2)
 
 	// Return true if the second string is alphabetically greater then the first, case insensitive

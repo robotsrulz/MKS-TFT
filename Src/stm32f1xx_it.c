@@ -41,12 +41,18 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+#if defined(STM32F107xC) && defined(MKS_TFT)
 extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
+extern TIM_HandleTypeDef htim2;
+extern UART_HandleTypeDef huart3;
+#elif defined(STM32F103xE) && defined(CZMINI)
+extern SD_HandleTypeDef hsd;
+#endif
+
 extern DMA_HandleTypeDef hdma_usart2_rx;
 extern TIM_HandleTypeDef htim7;
-extern TIM_HandleTypeDef htim2;
 extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
+
 
 /******************************************************************************/
 /*            Cortex-M3 Processor Interruption and Exception Handlers         */
@@ -162,7 +168,7 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f1xx.s).                    */
 /******************************************************************************/
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 /**
 * @brief This function handles EXTI line0 interrupt.
 */
@@ -190,7 +196,7 @@ void EXTI1_IRQHandler(void)
 
   /* USER CODE END EXTI1_IRQn 1 */
 }
-
+#endif
 /**
 * @brief This function handles DMA1 channel6 global interrupt.
 */
@@ -213,7 +219,6 @@ void EXTI9_5_IRQHandler(void)
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 
   /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
@@ -247,7 +252,7 @@ void USART2_IRQHandler(void)
 
   /* USER CODE END USART2_IRQn 1 */
 }
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 /**
 * @brief This function handles USART3 global interrupt.
 */
@@ -261,7 +266,7 @@ void USART3_IRQHandler(void)
 
   /* USER CODE END USART3_IRQn 1 */
 }
-
+#endif
 /**
 * @brief This function handles TIM7 global interrupt.
 */
@@ -279,7 +284,7 @@ void TIM7_IRQHandler(void)
 /**
 * @brief This function handles TIM2 global interrupt.
 */
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
@@ -304,7 +309,22 @@ void OTG_FS_IRQHandler(void)
 
   /* USER CODE END OTG_FS_IRQn 1 */
 }
+#elif defined(STM32F103xE) && defined(CZMINI)
+/**
+* @brief This function handles SDIO global interrupt.
+*/
+void SDIO_IRQHandler(void)
+{
+  /* USER CODE BEGIN SDIO_IRQn 0 */
 
+  /* USER CODE END SDIO_IRQn 0 */
+  HAL_SD_IRQHandler(&hsd);
+  /* USER CODE BEGIN SDIO_IRQn 1 */
+
+  /* USER CODE END SDIO_IRQn 1 */
+}
+
+#endif
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */

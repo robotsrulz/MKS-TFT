@@ -6,14 +6,20 @@
 		<Option title="MKS-TFT32" />
 		<Option pch_mode="2" />
 		<Option compiler="armgcc_eb" />
+		<Option virtualFolders="Hardware\;Hardware\MKS-TFT\;Hardware\F103ZE\;" />
 		<Build>
-			<Target title="Debug">
-				<Option output="bin\Debug\MKS-TFT32.elf" />
-				<Option object_output="obj\Debug\" />
+			<Target title="MKS-TFT32">
+				<Option output="bin\MKS-TFT32\MKS-TFT32.elf" />
+				<Option object_output="obj\MKS-TFT32\" />
 				<Option type="0" />
 				<Option create_hex="1" />
 				<Option compiler="armgcc_eb" />
-				<Option projectDeviceOptionsRelation="0" />
+				<Device>
+					<Add option="$device=cortex-m3" />
+					<Add option="$lscript=./STM32F107VC_FLASH.ld" />
+					<Add option="$stack=0x100" />
+					<Add option="$heap=0x200" />
+				</Device>
 				<Compiler>
 					<Add option="-std=c11" />
 					<Add option="-Wall" />
@@ -21,16 +27,20 @@
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
 					<Add option="-Os" />
-					<Add option="-g3" />
+					<Add option="-g1" />
 					<Add symbol="STM32F107xC" />
+					<Add symbol="MKS_TFT" />
 				</Compiler>
 				<Cpp>
+					<Add option="-fno-exceptions" />
+					<Add option="-fno-rtti" />
 					<Add option="-std=c++11" />
 					<Add option="-Wall" />
+					<Add option="-funroll-loops" />
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
-					<Add option="-O0" />
-					<Add option="-g3" />
+					<Add option="-Os" />
+					<Add option="-g1" />
 				</Cpp>
 				<Assembler>
 					<Add option="-Wa,--gdwarf-2" />
@@ -47,26 +57,37 @@
 					<Mode after="2" />
 				</ExtraCommands>
 			</Target>
-			<Target title="Release">
-				<Option output="bin\Release\MKS-TFT32.elf" />
-				<Option object_output="obj\Release\" />
+			<Target title="F103ZET6">
+				<Option output="bin\F103ZET6\MKS-TFT32.elf" />
+				<Option object_output="obj\F103ZET6\" />
 				<Option type="0" />
 				<Option create_hex="1" />
 				<Option compiler="armgcc_eb" />
-				<Option projectDeviceOptionsRelation="0" />
+				<Device>
+					<Add option="$device=cortex-m3" />
+					<Add option="$lscript=./STM32F103ZE_FLASH.ld" />
+					<Add option="$stack=0x100" />
+					<Add option="$heap=0x200" />
+				</Device>
 				<Compiler>
 					<Add option="-std=c11" />
 					<Add option="-funroll-loops" />
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
 					<Add option="-Os" />
-					<Add symbol="STM32F107xC" />
+					<Add option="-g1" />
+					<Add symbol="STM32F103xE" />
+					<Add symbol="CZMINI" />
 				</Compiler>
 				<Cpp>
+					<Add option="-fno-exceptions" />
+					<Add option="-fno-rtti" />
 					<Add option="-std=c++11" />
+					<Add option="-funroll-loops" />
 					<Add option="-fdata-sections" />
 					<Add option="-ffunction-sections" />
-					<Add option="-O2" />
+					<Add option="-Os" />
+					<Add option="-g1" />
 				</Cpp>
 				<Assembler>
 					<Add option="-Wa,--no-warn" />
@@ -150,11 +171,25 @@
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_pwr.h" />
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_rcc.h" />
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_rcc_ex.h" />
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_sd.h">
+			<Option target="F103ZET6" />
+		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_spi.h" />
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_sram.h">
+			<Option target="F103ZET6" />
+		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim.h" />
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim_ex.h" />
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_uart.h" />
-		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_ll_usb.h" />
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_ll_fsmc.h">
+			<Option target="F103ZET6" />
+		</Unit>
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_ll_sdmmc.h">
+			<Option target="F103ZET6" />
+		</Unit>
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_ll_usb.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -191,11 +226,19 @@
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rcc_ex.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_sd.c">
+			<Option compilerVar="CC" />
+			<Option target="F103ZET6" />
+		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_spi.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_spi_ex.c">
 			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_sram.c">
+			<Option compilerVar="CC" />
+			<Option target="F103ZET6" />
 		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_tim.c">
 			<Option compilerVar="CC" />
@@ -206,11 +249,19 @@
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_uart.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_fsmc.c">
+			<Option compilerVar="CC" />
+			<Option target="F103ZET6" />
+		</Unit>
+		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_sdmmc.c">
+			<Option compilerVar="CC" />
+			<Option target="F103ZET6" />
+		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_usb.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="FlashDebug.jscript">
-			<Option target="Debug" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Fonts\glcd17x22.cpp">
 			<Option compilerVar="CC" />
@@ -228,65 +279,129 @@
 		<Unit filename="Icons\NozzleIcons.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="Inc\Buzzer.h" />
+		<Unit filename="Inc\bsp_driver_sd.h">
+			<Option virtualFolder="Hardware\F103ZE\" />
+			<Option target="F103ZET6" />
+		</Unit>
+		<Unit filename="Inc\Buzzer.h">
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
+		</Unit>
 		<Unit filename="Inc\Display.h" />
 		<Unit filename="Inc\ecv.h" />
-		<Unit filename="Inc\eeprom.h" />
+		<Unit filename="Inc\eeprom.h">
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
+		</Unit>
 		<Unit filename="Inc\events.h" />
-		<Unit filename="Inc\fatfs.h" />
-		<Unit filename="Inc\ffconf.h" />
+		<Unit filename="Inc\fatfs.h">
+			<Option virtualFolder="Hardware\" />
+		</Unit>
+		<Unit filename="Inc\ffconf.h">
+			<Option virtualFolder="Hardware\" />
+		</Unit>
 		<Unit filename="Inc\FileManager.h" />
-		<Unit filename="Inc\FreeRTOSConfig.h" />
+		<Unit filename="Inc\FreeRTOSConfig.h">
+			<Option virtualFolder="Hardware\" />
+		</Unit>
 		<Unit filename="Inc\Mem.h" />
 		<Unit filename="Inc\MessageLog.h" />
 		<Unit filename="Inc\Misc.h" />
-		<Unit filename="Inc\mks_conf.h" />
+		<Unit filename="Inc\mks_conf.h">
+			<Option virtualFolder="Hardware\" />
+		</Unit>
 		<Unit filename="Inc\PanelDue.h" />
 		<Unit filename="Inc\Print.h" />
 		<Unit filename="Inc\PrinterStatus.h" />
 		<Unit filename="Inc\RequestTimer.h" />
 		<Unit filename="Inc\Reset.h" />
+		<Unit filename="Inc\sd_diskio.h">
+			<Option virtualFolder="Hardware\F103ZE\" />
+			<Option target="F103ZET6" />
+		</Unit>
 		<Unit filename="Inc\SerialIo.h" />
-		<Unit filename="Inc\spiflash_w25q16dv.h" />
-		<Unit filename="Inc\spisd_diskio.h" />
-		<Unit filename="Inc\stm32f1xx_hal_conf.h" />
-		<Unit filename="Inc\stm32f1xx_it.h" />
+		<Unit filename="Inc\spiflash_w25q16dv.h">
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Inc\spisd_diskio.h">
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Inc\stm32f1xx_hal_conf.h">
+			<Option virtualFolder="Hardware\" />
+		</Unit>
+		<Unit filename="Inc\stm32f1xx_it.h">
+			<Option virtualFolder="Hardware\" />
+		</Unit>
 		<Unit filename="Inc\Strings.h" />
-		<Unit filename="Inc\usb_host.h" />
-		<Unit filename="Inc\usbh_conf.h" />
-		<Unit filename="Inc\usbh_diskio.h" />
+		<Unit filename="Inc\usb_host.h">
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Inc\usbh_conf.h">
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Inc\usbh_diskio.h">
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
+		</Unit>
 		<Unit filename="Inc\UserInterface.h" />
 		<Unit filename="Inc\UTFT.h" />
 		<Unit filename="Inc\UTouch.h" />
 		<Unit filename="Inc\Vector.h" />
-		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc.h" />
-		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_bot.h" />
-		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_scsi.h" />
+		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_bot.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_scsi.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_bot.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_scsi.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
 		</Unit>
-		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_core.h" />
-		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_ctlreq.h" />
-		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_def.h" />
-		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_ioreq.h" />
-		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_pipes.h" />
+		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_core.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_ctlreq.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_def.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_ioreq.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_pipes.h">
+			<Option target="MKS-TFT32" />
+		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_core.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ctlreq.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ioreq.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_pipes.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Middlewares\Third_Party\FatFs\src\diskio.c">
 			<Option compilerVar="CC" />
@@ -353,19 +468,29 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="MKS_TFT.jflash">
-			<Option target="Debug" />
+			<Option target="MKS-TFT32" />
+		</Unit>
+		<Unit filename="Src\bsp_driver_sd.c">
+			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\F103ZE\" />
+			<Option target="F103ZET6" />
 		</Unit>
 		<Unit filename="Src\Buzzer.cpp">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Src\Display.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\eeprom.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Src\fatfs.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\" />
 		</Unit>
 		<Unit filename="Src\FileManager.cpp">
 			<Option compilerVar="CC" />
@@ -391,32 +516,50 @@
 		<Unit filename="Src\RequestTimer.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Src\sd_diskio.c">
+			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\F103ZE\" />
+			<Option target="F103ZET6" />
+		</Unit>
 		<Unit filename="Src\SerialIo.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Src\spiflash_w25q16dv.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Src\spisd_diskio.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Src\stm32f1xx_hal_msp.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\" />
 		</Unit>
 		<Unit filename="Src\stm32f1xx_hal_timebase_TIM.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\" />
 		</Unit>
 		<Unit filename="Src\stm32f1xx_it.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\" />
 		</Unit>
 		<Unit filename="Src\usb_host.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Src\usbh_conf.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Src\usbh_diskio.c">
 			<Option compilerVar="CC" />
+			<Option virtualFolder="Hardware\MKS-TFT\" />
+			<Option target="MKS-TFT32" />
 		</Unit>
 		<Unit filename="Src\UserInterface.cpp">
 			<Option compilerVar="CC" />
@@ -427,11 +570,16 @@
 		<Unit filename="Src\UTouch.cpp">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="STM32F107VC_FLASH.ld" />
+		<Unit filename="STM32F103ZE_FLASH.ld">
+			<Option target="F103ZET6" />
+		</Unit>
+		<Unit filename="STM32F107VC_FLASH.ld">
+			<Option target="MKS-TFT32" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="Debug" active_interface="J-link">
+				<target_debugging_settings target="MKS-TFT32" active_interface="J-link">
 					<debug_interface interface_id="J-link" ip_address="localhost" ip_port="2331" path="%Software\SEGGER\J-Link:InstallPath%" executable="JLinkGDBServer.exe" description="" dont_start_server="false" backoff_time="2000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
 						<family_options family_id="Generic">
 							<option opt_id="ID_CMD_BEFORE" opt_value="" />
@@ -476,7 +624,7 @@
 						</family_options>
 					</debug_interface>
 				</target_debugging_settings>
-				<target_debugging_settings target="Release" active_interface="ST-link">
+				<target_debugging_settings target="F103ZET6" active_interface="ST-link">
 					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="1000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
 						<family_options family_id="STMicroelectronics">
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />

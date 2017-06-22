@@ -160,6 +160,7 @@ template <class T> inline void swap(T& a, T& b)
 	b = temp;
 }
 
+#if defined(STM32F107xC) && defined(MKS_TFT)
 inline void UTFT::LCD_Write_COM(uint8_t VL)
 {
 	HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_RESET);
@@ -190,6 +191,34 @@ inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num)
 		--num;
 	}
 }
+
+#elif defined(STM32F103xE) && defined(CZMINI)
+
+static volatile uint32_t *pLcdData = (uint32_t *) 0x60080000;
+static volatile uint32_t *pLcdReg  = (uint32_t *) 0x60000000;
+
+inline void UTFT::LCD_Write_COM(uint8_t VL)
+{
+	*(uint16_t *) (pLcdReg) = VL;
+}
+
+inline void UTFT::LCD_Write_DATA16(uint16_t VHL)
+{
+	*(uint16_t *) (pLcdData)= VHL;
+}
+
+inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num) {
+
+	while (num != 0)
+    {
+        LCD_Write_DATA16 (VHL);
+        --num;
+
+        __asm__ __volatile__(""); // prevent GCC to optimize out this cycle
+    }
+}
+
+#endif
 
 // Write the data num1 * num2 times, where num1 >= 1
 void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num1, uint16_t num2)
@@ -233,10 +262,17 @@ void UTFT::InitLCD(DisplayOrientation po)
 	disp_x_size = getDisplayXSize() - 1;
 	disp_y_size = getDisplayYSize() - 1;
 
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
 
 	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_nRD_GPIO_Port, LCD_nRD_Pin, GPIO_PIN_SET);
+#elif defined(STM32F103xE) && defined(CZMINI)
+	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_RESET);
+	osDelay (300);
+	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_SET);
+	osDelay (100);
+#endif
 
 	switch (orient) {
 	case DisplayOrientation::SwapXY:
@@ -262,22 +298,26 @@ void UTFT::InitLCD(DisplayOrientation po)
 		break;
 	}
 
-	LCD_Write_COM_DATA16(0x0001, R01h);			// Driver Output Control Register (R01h)
-	LCD_Write_COM_DATA16(0x0002, 0x0700);		// LCD Driving Waveform Control (R02h)
-	LCD_Write_COM_DATA16(0x0003, R03h);			// Entry Mode (R03h)
-	LCD_Write_COM_DATA16(0x0004, 0x0000);		// Resizing Control Register (R04h), W
+	LCD_Write_COM_DATA16(0x0001, R01h);			 // Driver Output Control Register (R01h)
+	LCD_Write_COM_DATA16(0x0002, 0x0700);		 // LCD Driving Waveform Control (R02h)
+	LCD_Write_COM_DATA16(0x0003, R03h);			 // Entry Mode (R03h)
+	LCD_Write_COM_DATA16(0x0004, 0x0000);		 // Resizing Control Register (R04h), W
 	LCD_Write_COM_DATA16(0x0008, 0x0202);
 
 	LCD_Write_COM_DATA16(0x0009, 0x0000);
 	LCD_Write_COM_DATA16(0x000a, 0x0000);
-
+#if defined(STM32F103xE) && defined(CZMINI)
+    LCD_Write_COM_DATA16(0x000c, 0x0001);         // RGB Display Interface Control 1 (R0Ch) W, RIM[1:0]=01 (16-bit RGB interface (1 transfer/pixel), DB[17:13] and DB[11:1])
+    LCD_Write_COM_DATA16(0x000d, 0x0000);         // Frame Marker Position (R0Dh) W,
+    LCD_Write_COM_DATA16(0x000f, 0x0000);         // RGB Display Interface Control 2 (R0Fh)
+#endif
 	LCD_Write_COM_DATA16(0x0010, 0x0000);         // Power Control 1 (R10h)
 	LCD_Write_COM_DATA16(0x0011, 0x0007);         // Power Control 2 (R11h)
 	LCD_Write_COM_DATA16(0x0012, 0x0000);         // Power Control 3 (R12h)
 	LCD_Write_COM_DATA16(0x0013, 0x0000);         // Power Control 4 (R13h)
 
 	osDelay(200);
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	LCD_Write_COM_DATA16(0x0010, 0x14B0);         // Power Control 1 (R10h)
 	osDelay(50);
 	LCD_Write_COM_DATA16(0x0011, 0x0007);         // Power Control 2 (R11h)
@@ -299,6 +339,37 @@ void UTFT::InitLCD(DisplayOrientation po)
 	LCD_Write_COM_DATA16(0x003c, 0x0203);         // Gamma Control 9
 	LCD_Write_COM_DATA16(0x003d, 0x0403);         // Gamma Control 10
 
+#elif defined(STM32F103xE) && defined(CZMINI)
+    LCD_Write_COM_DATA16(0x0010, 0x1590);	      // Power Control 1 (R10h)
+    /**
+     * AP[2:0]=1 (1.00)
+     * APE = Ó1Ô to start the generation of power supply according to the power supply startup sequence
+     * BT[3:0]=5 DDVDH=Vci1 x2 VCL=-Vci1 VGH=Vci1 x5 VGL=-Vci1 x3
+     **/
+    LCD_Write_COM_DATA16(0x0011, 0x0227);		  // VC[2:0]=7 (1.0xVci), DC0[2:0]=2(Fosc/4), DC1[2:0]=2(Fosc/16)
+    osDelay(50);  /* delay 50 ms */
+    LCD_Write_COM_DATA16(0x0012, 0x009c);		  // VRH[3:0]=Vci x1.80, PON=1 (VGL output is enable), VCIRE=1 (Internal reference voltage 2.5V)
+    osDelay(50);  /* delay 50 ms */
+    LCD_Write_COM_DATA16(0x0013, 0x1900);  		  // Power Control 4 (R13h) VREG1OUT x 0.96
+
+    LCD_Write_COM_DATA16(0x0029, 0x0023);		  // Power Control 7 (R29h), VCM[5:0]  VcomH=VREG1OUT x0.860
+    LCD_Write_COM_DATA16(0x002b, 0x000e);	      // Frame Rate and Color Control (R2Bh), e=112 fps
+    osDelay(50);  /* delay 50 ms */
+
+    /* Gamma Control (R30h ~ R3Dh) */
+    LCD_Write_COM_DATA16(0x0030, 0x0007);
+    LCD_Write_COM_DATA16(0x0031, 0x0707);
+    LCD_Write_COM_DATA16(0x0032, 0x0006);
+    LCD_Write_COM_DATA16(0x0035, 0x0704);
+    LCD_Write_COM_DATA16(0x0036, 0x1f04);
+    LCD_Write_COM_DATA16(0x0037, 0x0004);
+    LCD_Write_COM_DATA16(0x0038, 0x0000);
+    LCD_Write_COM_DATA16(0x0039, 0x0706);
+    LCD_Write_COM_DATA16(0x003c, 0x0701);
+    LCD_Write_COM_DATA16(0x003d, 0x000f);
+    osDelay(50);  /* delay 50 ms */
+#endif
+
 	LCD_Write_COM_DATA16(0x0050, 0x0000);		  // Window Horizontal RAM Address Start (R50h)
 	LCD_Write_COM_DATA16(0x0051, 239);			  // Window Horizontal RAM Address End (R51h)
 	LCD_Write_COM_DATA16(0x0052, 0x0000);		  // Window Vertical RAM Address Start (R52h)
@@ -306,17 +377,35 @@ void UTFT::InitLCD(DisplayOrientation po)
 
 	LCD_Write_COM_DATA16(0x0060, R60h);			  // Driver Output Control (R60h)
 	LCD_Write_COM_DATA16(0x0061, 0x0001);		  // Driver Output Control (R61h)
-	LCD_Write_COM_DATA16(0x0090, 0x0010);		  // Panel Interface Control 1 (R90h)
+#if defined(STM32F103xE) && defined(CZMINI)
+    LCD_Write_COM_DATA16(0x006a, 0x0000);
 
+    LCD_Write_COM_DATA16(0x0080, 0x0000);         // Partial Image 1 Display Position (R80h)
+    LCD_Write_COM_DATA16(0x0081, 0x0000);         // Partial Image 1 RAM Start/End Address (R81h, R82h)
+    LCD_Write_COM_DATA16(0x0082, 0x0000);
+    LCD_Write_COM_DATA16(0x0083, 0x0000);         // Partial Image 2 Display Position (R83h)
+    LCD_Write_COM_DATA16(0x0084, 0x0000);         // Partial Image 2 RAM Start/End Address (R84h, R85h)
+    LCD_Write_COM_DATA16(0x0085, 0x0000);
+#endif
+	LCD_Write_COM_DATA16(0x0090, 0x0010);		  // Panel Interface Control 1 (R90h)
+#if defined(STM32F103xE) && defined(CZMINI)
+    /**
+      *  RTNI[4:0]=10000b (16 clocks) DIVI[1:0]=0 (fosc/1)
+      **/
+    LCD_Write_COM_DATA16(0x0092, 0x0000);         // Panel Interface Control 2 (R92h) NOWI[2:0]=0 (o clk)
+    LCD_Write_COM_DATA16(0x0095, 0x0110);	      // Panel Interface Control 4 (R95h) (RGB interface mode)
+    LCD_Write_COM_DATA16(0x0097, 0x0000);	      // Panel Interface Control 5 (R97h) (RGB interface mode)
+#endif
 	LCD_Write_COM_DATA16(0x0007, 0x0133);		  // Display Control 1 (R07h) W,
 	osDelay(100);
 
 	setColor(0xFFFF);
 	setBackColor(0);
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	// turn on backlight
 	HAL_GPIO_WritePin(LCD_BACKLIGHT_GPIO_Port, LCD_BACKLIGHT_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
@@ -530,7 +619,9 @@ void UTFT::drawCircle(int x, int y, int radius)
 	int x1 = 0;
 	int y1 = radius;
 
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	setXY(x, y + radius, x, y + radius);
 	LCD_Write_DATA16(fcolour);
 	setXY(x, y - radius, x, y - radius);
@@ -568,7 +659,9 @@ void UTFT::drawCircle(int x, int y, int radius)
 		setXY(x - y1, y - x1, x - y1, y - x1);
 		LCD_Write_DATA16(fcolour);
 	}
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 void UTFT::fillCircle(int x, int y, int radius)
@@ -578,8 +671,9 @@ void UTFT::fillCircle(int x, int y, int radius)
 	int ddF_y = -2 * radius;
 	int x1 = 0;
 	int y1 = radius;
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	setXY(x, y + radius, x, y + radius);
 	LCD_Write_DATA16(fcolour);
 	setXY(x, y - radius, x, y - radius);
@@ -607,23 +701,33 @@ void UTFT::fillCircle(int x, int y, int radius)
 		setXY(x - y1, y - x1, x + y1, y - x1);
 		LCD_Write_Repeated_DATA16(fcolour, y1 + y1);
 	}
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 void UTFT::fillScr(Colour c, uint16_t leftMargin)
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	setXY(leftMargin, 0, getDisplayXSize() - 1, getDisplayYSize() - 1);
 	LCD_Write_Repeated_DATA16(c, getDisplayXSize() - leftMargin, getDisplayYSize());
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 void UTFT::drawPixel(int x, int y)
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	setXY(x, y, x, y);
 	LCD_Write_DATA16(fcolour);
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 void UTFT::drawLine(int x1, int y1, int x2, int y2)
@@ -652,8 +756,9 @@ void UTFT::drawLine(int x1, int y1, int x2, int y2)
 		int sx = (x1 < x2) ? 1 : -1;
 		int sy = (y1 < y2) ? 1 : -1;
 		int err = dx - dy;
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 		HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 		for (;;)
 		{
 			setXY(x1, y1, x1, y1);
@@ -671,24 +776,34 @@ void UTFT::drawLine(int x1, int y1, int x2, int y2)
 				y1 += sy;
 			}
 		}
+#if defined(STM32F107xC) && defined(MKS_TFT)
 		HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 	}
 }
 
 void UTFT::drawHLine(int x, int y, int len)
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	setXY(x, y, x+len, y);
 	LCD_Write_Repeated_DATA16(fcolour, len + 1);
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 void UTFT::drawVLine(int x, int y, int len)
 {
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	setXY(x, y, x, y+len);
 	LCD_Write_Repeated_DATA16(fcolour, len + 1);
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 // New print functions
@@ -716,11 +831,14 @@ void UTFT::clearToMargin()
 		{
 			ySize = getDisplayYSize() - textYpos;
 		}
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
 		HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 		setXY(textXpos, textYpos, textRightMargin - 1, textYpos + ySize - 1);
 		LCD_Write_Repeated_DATA16(bcolour, textRightMargin - textXpos, ySize);
+#if defined(STM32F107xC) && defined(MKS_TFT)
 		HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 	}
 }
 
@@ -820,8 +938,9 @@ size_t UTFT::writeNative(uint32_t c)
 	const uint32_t cmask = (1UL << cfont.ySize()) - 1;
 
     uint8_t nCols = *(uint8_t*)(fontPtr++);
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
-
+#endif
 	if (lastCharColData != 0)	// if we have written anything other than spaces
 	{
 		uint8_t numSpaces = cfont.spaces();
@@ -929,7 +1048,9 @@ size_t UTFT::writeNative(uint32_t c)
 		--nCols;
 		++textXpos;
     }
+#if defined(STM32F107xC) && defined(MKS_TFT)
  	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 	return 1;
 }
 
@@ -950,7 +1071,9 @@ void UTFT::setFont(const uint8_t* font)
 void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int scale, bool byCols)
 {
 	int curY = y;
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	for (int ty = 0; ty < sy; ty++)
 	{
 		for (int i = 0; i < scale; ++i)
@@ -984,14 +1107,18 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 			++curY;
 		}
 	}
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 // Seaw a bitmap using 4-bit colours and a palette
 void UTFT::drawBitmap4(int x, int y, int sx, int sy, const uint8_t * data, Palette palette, int scale, bool byCols)
 {
 	int curY = y;
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	for (int ty = 0; ty < sy; ty++)
 	{
 		for (int i = 0; i < scale; ++i)
@@ -1026,7 +1153,9 @@ void UTFT::drawBitmap4(int x, int y, int sx, int sy, const uint8_t * data, Palet
 			++curY;
 		}
 	}
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 // Draw a compressed bitmap. Data comprises alternate (repeat count - 1, data to write) pairs, both as 16-bit values.
@@ -1036,7 +1165,9 @@ void UTFT::drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *da
 	uint16_t col = 0;
 	sx += x;
 	sy += y;
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	for (int tx = x; tx < sx; tx++)
 	{
 		for (int ty = y; ty < sy; ty++)
@@ -1054,7 +1185,9 @@ void UTFT::drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *da
 			LCD_Write_DATA16(col);
 		}
 	}
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
 
 // Draw a compressed bitmap. Data comprises alternate (repeat count - 1, data to write) pairs, both as 16-bit values.
@@ -1064,7 +1197,9 @@ void UTFT::drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const u
 	uint16_t col = 0;
 	sx += x;
 	sy += y;
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
+#endif
 	for (int ty = sy; ty != 0; )
 	{
 		--ty;
@@ -1083,5 +1218,7 @@ void UTFT::drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const u
 			LCD_Write_DATA16(col);
 		}
 	}
+#if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_SET);
+#endif
 }
