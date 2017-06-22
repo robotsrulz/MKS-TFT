@@ -200,7 +200,7 @@ void SystemClock_Config(void)
         Error_Handler();
 
     RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-    |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+            |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -342,7 +342,6 @@ static void MX_SDIO_SD_Init(void)
     hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
     hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
     hsd.Init.ClockDiv = 2;
-
 }
 
 static void MX_SPI2_Init(void)
@@ -387,6 +386,7 @@ static void MX_FSMC_Init(void)
     hsram1.Init.AsynchronousWait = FSMC_ASYNCHRONOUS_WAIT_DISABLE;
     hsram1.Init.WriteBurst = FSMC_WRITE_BURST_DISABLE;
     /* Timing */
+
     Timing.AddressSetupTime = 1;
     Timing.AddressHoldTime = 1;
     Timing.DataSetupTime = 2;
@@ -453,14 +453,15 @@ static void MX_GPIO_Init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 #elif defined(STM32F103xE) && defined(CZMINI)
     HAL_GPIO_WritePin(GPIOE, LCD_RESET_Pin, GPIO_PIN_RESET);
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Pin = LCD_RESET_Pin;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 #endif
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
 	/*Configure GPIO pin : TOUCH_DI_Pin */
 	GPIO_InitStruct.Pin = TOUCH_DI_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING; // FALLING - touch, RISING - no touch
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(TOUCH_DI_GPIO_Port, &GPIO_InitStruct);
 
@@ -525,10 +526,6 @@ static void MX_GPIO_Init(void)
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(TOUCH_nCS_GPIO_Port, &GPIO_InitStruct);
-
-    /* EXTI interrupt init*/
-    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 #endif
 }
 
@@ -656,7 +653,7 @@ void StartUITask(void const * argument) {
 
 	PanelDueMain();
 
-//	for (;;) {
+	for (;;) {
 //		if (xUIEventQueue != 0) {
 
 //			xUIEvent_t event;
@@ -668,7 +665,7 @@ void StartUITask(void const * argument) {
 				 * No events received
 				 * */
 //			}
-//		}
+		}
 //	}
 	/* USER CODE END 5 */
 }

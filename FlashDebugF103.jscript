@@ -1,0 +1,4 @@
+h
+loadbin bin\F103ZET6\F103ZET6.hex, 0
+r
+q

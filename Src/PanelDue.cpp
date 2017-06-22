@@ -316,7 +316,7 @@ void InitLcd(DisplayOrientation dor, uint32_t language, uint32_t colourScheme)
 	colours = &colourSchemes[colourScheme];
     lcd.fillScr(colours->activeBackColour);
 	UI::CreateFields(language, *colours);							// create all the fields
-// 	osDelay(100);													// give the LCD time to update
+ 	osDelay(10);													// give the LCD time to update
 }
 
 // Ignore touches for a long time
@@ -1087,6 +1087,7 @@ extern "C" int PanelDueMain(void)
 
 	// Read parameters from flash memory
 	nvData.Load();
+
 	if (nvData.IsValid())
 	{
 		// The touch panel has already been calibrated

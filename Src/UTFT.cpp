@@ -194,17 +194,17 @@ inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num)
 
 #elif defined(STM32F103xE) && defined(CZMINI)
 
-static volatile uint32_t *pLcdData = (uint32_t *) 0x60080000;
-static volatile uint32_t *pLcdReg  = (uint32_t *) 0x60000000;
+static uint16_t volatile *pLcdData = (uint16_t *) 0x60080000;
+static uint16_t volatile *pLcdReg  = (uint16_t *) 0x60000000;
 
 inline void UTFT::LCD_Write_COM(uint8_t VL)
 {
-	*(uint16_t *) (pLcdReg) = VL;
+	*pLcdReg = (uint16_t) VL;
 }
 
 inline void UTFT::LCD_Write_DATA16(uint16_t VHL)
 {
-	*(uint16_t *) (pLcdData)= VHL;
+	*pLcdData = VHL;
 }
 
 inline void UTFT::LCD_Write_Repeated_DATA16(uint16_t VHL, uint16_t num) {
@@ -269,9 +269,13 @@ void UTFT::InitLCD(DisplayOrientation po)
 	HAL_GPIO_WritePin(LCD_nRD_GPIO_Port, LCD_nRD_Pin, GPIO_PIN_SET);
 #elif defined(STM32F103xE) && defined(CZMINI)
 	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_RESET);
-	osDelay (300);
+	osDelay (5);
 	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_SET);
-	osDelay (100);
+	osDelay (1);
+
+	*pLcdReg = 0x0000;
+	uint16_t volatile id = *pLcdData;        // Read display id
+
 #endif
 
 	switch (orient) {
@@ -307,26 +311,26 @@ void UTFT::InitLCD(DisplayOrientation po)
 	LCD_Write_COM_DATA16(0x0009, 0x0000);
 	LCD_Write_COM_DATA16(0x000a, 0x0000);
 #if defined(STM32F103xE) && defined(CZMINI)
-    LCD_Write_COM_DATA16(0x000c, 0x0001);         // RGB Display Interface Control 1 (R0Ch) W, RIM[1:0]=01 (16-bit RGB interface (1 transfer/pixel), DB[17:13] and DB[11:1])
-    LCD_Write_COM_DATA16(0x000d, 0x0000);         // Frame Marker Position (R0Dh) W,
-    LCD_Write_COM_DATA16(0x000f, 0x0000);         // RGB Display Interface Control 2 (R0Fh)
+//    LCD_Write_COM_DATA16(0x000c, 0x0001);         // RGB Display Interface Control 1 (R0Ch) W, RIM[1:0]=01 (16-bit RGB interface (1 transfer/pixel), DB[17:13] and DB[11:1])
+//    LCD_Write_COM_DATA16(0x000d, 0x0000);         // Frame Marker Position (R0Dh) W,
+//    LCD_Write_COM_DATA16(0x000f, 0x0000);         // RGB Display Interface Control 2 (R0Fh)
 #endif
 	LCD_Write_COM_DATA16(0x0010, 0x0000);         // Power Control 1 (R10h)
 	LCD_Write_COM_DATA16(0x0011, 0x0007);         // Power Control 2 (R11h)
 	LCD_Write_COM_DATA16(0x0012, 0x0000);         // Power Control 3 (R12h)
 	LCD_Write_COM_DATA16(0x0013, 0x0000);         // Power Control 4 (R13h)
 
-	osDelay(200);
+	osDelay(20);
 #if defined(STM32F107xC) && defined(MKS_TFT)
 	LCD_Write_COM_DATA16(0x0010, 0x14B0);         // Power Control 1 (R10h)
-	osDelay(50);
+	osDelay(5);
 	LCD_Write_COM_DATA16(0x0011, 0x0007);         // Power Control 2 (R11h)
-	osDelay(50);
+	osDelay(5);
 	LCD_Write_COM_DATA16(0x0012, 0x008E);         // Power Control 3 (R12h)
 	LCD_Write_COM_DATA16(0x0013, 0x0C00);         // Power Control 4 (R13h)
 
 	LCD_Write_COM_DATA16(0x0029, 0x0015);         // NVM read data 2 (R29h)
-	osDelay(50);
+	osDelay(5);
 
 	LCD_Write_COM_DATA16(0x0030, 0x0000);         // Gamma Control 1
 	LCD_Write_COM_DATA16(0x0031, 0x0107);         // Gamma Control 2
@@ -347,14 +351,14 @@ void UTFT::InitLCD(DisplayOrientation po)
      * BT[3:0]=5 DDVDH=Vci1 x2 VCL=-Vci1 VGH=Vci1 x5 VGL=-Vci1 x3
      **/
     LCD_Write_COM_DATA16(0x0011, 0x0227);		  // VC[2:0]=7 (1.0xVci), DC0[2:0]=2(Fosc/4), DC1[2:0]=2(Fosc/16)
-    osDelay(50);  /* delay 50 ms */
+    osDelay(5);  /* delay 5 ms */
     LCD_Write_COM_DATA16(0x0012, 0x009c);		  // VRH[3:0]=Vci x1.80, PON=1 (VGL output is enable), VCIRE=1 (Internal reference voltage 2.5V)
-    osDelay(50);  /* delay 50 ms */
+    osDelay(5);  /* delay 5 ms */
     LCD_Write_COM_DATA16(0x0013, 0x1900);  		  // Power Control 4 (R13h) VREG1OUT x 0.96
 
     LCD_Write_COM_DATA16(0x0029, 0x0023);		  // Power Control 7 (R29h), VCM[5:0]  VcomH=VREG1OUT x0.860
     LCD_Write_COM_DATA16(0x002b, 0x000e);	      // Frame Rate and Color Control (R2Bh), e=112 fps
-    osDelay(50);  /* delay 50 ms */
+    osDelay(5);  /* delay 5 ms */
 
     /* Gamma Control (R30h ~ R3Dh) */
     LCD_Write_COM_DATA16(0x0030, 0x0007);
@@ -367,7 +371,7 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_COM_DATA16(0x0039, 0x0706);
     LCD_Write_COM_DATA16(0x003c, 0x0701);
     LCD_Write_COM_DATA16(0x003d, 0x000f);
-    osDelay(50);  /* delay 50 ms */
+    osDelay(5);  /* delay 50 ms */
 #endif
 
 	LCD_Write_COM_DATA16(0x0050, 0x0000);		  // Window Horizontal RAM Address Start (R50h)
@@ -397,7 +401,7 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_COM_DATA16(0x0097, 0x0000);	      // Panel Interface Control 5 (R97h) (RGB interface mode)
 #endif
 	LCD_Write_COM_DATA16(0x0007, 0x0133);		  // Display Control 1 (R07h) W,
-	osDelay(100);
+	osDelay(10);
 
 	setColor(0xFFFF);
 	setBackColor(0);

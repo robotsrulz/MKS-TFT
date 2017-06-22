@@ -56,9 +56,7 @@ namespace SerialIo
         huart2.Init.OverSampling = UART_OVERSAMPLING_16;
 
         if (HAL_UART_Init(&huart2) != HAL_OK)
-        {
             Error_Handler();
-        }
 
         SendChar('\n');
 

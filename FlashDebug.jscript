@@ -1,4 +1,0 @@
-h
-loadbin bin\Debug\MKS-TFT32.hex, 0
-r
-q

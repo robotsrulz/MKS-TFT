@@ -32,7 +32,7 @@ void UTouch::init(uint16_t xp, uint16_t yp, DisplayOrientation orientationAdjust
 	pTxData[0] = 0x94;
 	HAL_SPI_TransmitReceive(&hspi_touch, pTxData, pRxData, 3, 1000);
 
-	// HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(TOUCH_nCS_GPIO_Port, TOUCH_nCS_Pin, GPIO_PIN_SET);
 }
 
 // If the panel is touched, return the coordinates in x and y and return true; else return false

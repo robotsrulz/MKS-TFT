@@ -1,0 +1,4 @@
+h
+loadbin bin\MKS-TFT32\MKS-TFT32.hex, 0
+r
+q

@@ -375,7 +375,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
   /* USER CODE END USART2_MspInit 0 */
     /* Peripheral clock enable */
     __HAL_RCC_USART2_CLK_ENABLE();
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
     /**USART2 GPIO Configuration
     PD5     ------> USART2_TX
     PD6     ------> USART2_RX
@@ -391,7 +391,21 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     __HAL_AFIO_REMAP_USART2_ENABLE();
+#elif defined(STM32F103xE) && defined(CZMINI)
+    /**USART2 GPIO Configuration
+    PA2     ------> USART2_TX
+    PA3     ------> USART2_RX
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+#endif
     /* Peripheral DMA init*/
 
     hdma_usart2_rx.Instance = DMA1_Channel6;
@@ -463,13 +477,19 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
   /* USER CODE END USART2_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_USART2_CLK_DISABLE();
-
+#if defined(STM32F107xC) && defined(MKS_TFT)
     /**USART2 GPIO Configuration
     PD5     ------> USART2_TX
     PD6     ------> USART2_RX
     */
     HAL_GPIO_DeInit(GPIOD, GPIO_PIN_5|GPIO_PIN_6);
-
+#elif defined(STM32F103xE) && defined(CZMINI)
+    /**USART2 GPIO Configuration
+    PA2     ------> USART2_TX
+    PA3     ------> USART2_RX
+    */
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_3);
+#endif
     /* Peripheral DMA DeInit*/
     HAL_DMA_DeInit(huart->hdmarx);
 
