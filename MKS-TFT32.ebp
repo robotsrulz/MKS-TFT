@@ -153,7 +153,7 @@
 				<ExtraCommands>
 					<Add after='&quot;C:\Program Files (x86)\SEGGER\JLink_V612f\JLink.exe&quot; -if swd -device STM32F103XE -speed 4000 -CommanderScript $(ProjectDir)FlashDebugF103_50.jscript' />
 					<Mode before="0" />
-					<Mode after="0" />
+					<Mode after="2" />
 				</ExtraCommands>
 			</Target>
 		</Build>
@@ -668,10 +668,16 @@
 		<Extensions>
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="F103ZET6_50" active_interface="J-link">
+				<target_debugging_settings target="MKS-TFT32" active_interface="J-link">
 					<debug_interface interface_id="J-link" ip_address="localhost" ip_port="2331" path="%Software\SEGGER\J-Link:InstallPath%" executable="JLinkGDBServer.exe" description="" dont_start_server="false" backoff_time="2000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="Generic">
+							<option opt_id="ID_CMD_BEFORE" opt_value="" />
+							<option opt_id="ID_GDB_SERVER_CL" opt_value="" />
+							<option opt_id="ID_CMD_RESET" opt_value="" />
+							<option opt_id="ID_CMD_AFTER" opt_value="" />
+						</family_options>
 						<family_options family_id="STMicroelectronics">
-							<option opt_id="ID_DEVICE" opt_value="STM32F103ZE" />
+							<option opt_id="ID_DEVICE" opt_value="STM32F107VC" />
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
 							<option opt_id="ID_SPEED" opt_value="4000" />
 							<option opt_id="ID_AUTO_SPEED" opt_value="1" />
@@ -707,16 +713,10 @@
 						</family_options>
 					</debug_interface>
 				</target_debugging_settings>
-				<target_debugging_settings target="MKS-TFT32" active_interface="J-link">
+				<target_debugging_settings target="F103ZET6_50" active_interface="J-link">
 					<debug_interface interface_id="J-link" ip_address="localhost" ip_port="2331" path="%Software\SEGGER\J-Link:InstallPath%" executable="JLinkGDBServer.exe" description="" dont_start_server="false" backoff_time="2000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
-						<family_options family_id="Generic">
-							<option opt_id="ID_CMD_BEFORE" opt_value="" />
-							<option opt_id="ID_GDB_SERVER_CL" opt_value="" />
-							<option opt_id="ID_CMD_RESET" opt_value="" />
-							<option opt_id="ID_CMD_AFTER" opt_value="" />
-						</family_options>
 						<family_options family_id="STMicroelectronics">
-							<option opt_id="ID_DEVICE" opt_value="STM32F107VC" />
+							<option opt_id="ID_DEVICE" opt_value="STM32F103ZE" />
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
 							<option opt_id="ID_SPEED" opt_value="4000" />
 							<option opt_id="ID_AUTO_SPEED" opt_value="1" />

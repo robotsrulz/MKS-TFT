@@ -261,7 +261,6 @@ void UTFT::InitLCD(DisplayOrientation po)
 	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_nRD_GPIO_Port, LCD_nRD_Pin, GPIO_PIN_SET);
 #elif defined(STM32F103xE) && defined(CZMINI)
-# if defined(ILI9325)
 	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_RESET);
 	osDelay (5);
 	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_SET);
@@ -269,7 +268,6 @@ void UTFT::InitLCD(DisplayOrientation po)
 
 	// *pLcdReg = 0x0000;
 	// uint16_t volatile id = *pLcdData;        // Read display id
-# endif
 #endif
 
 #if defined(ILI9325) || defined(ILI9328)
@@ -493,12 +491,14 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 
 	if (orient & SwapXY)
 	{
+#if 1
 		if (orient & ReverseX)
 		{
-			y2 = disp_y_size - p_x1;
-			y1 = disp_y_size - p_x2;
+			y2 = disp_x_size - p_x1;
+			y1 = disp_x_size - p_x2;
 		}
 		else
+#endif
 		{
 			y1 = p_x1;
 			y2 = p_x2;

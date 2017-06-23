@@ -386,7 +386,6 @@ static void MX_FSMC_Init(void)
     hsram1.Init.AsynchronousWait = FSMC_ASYNCHRONOUS_WAIT_DISABLE;
     hsram1.Init.WriteBurst = FSMC_WRITE_BURST_DISABLE;
     /* Timing */
-
     Timing.AddressSetupTime = 1;
     Timing.AddressHoldTime = 1;
     Timing.DataSetupTime = 2;
