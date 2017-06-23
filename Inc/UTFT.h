@@ -65,9 +65,6 @@ enum DisplayOrientation {
 	Landscape = SwapXY | ReverseY
 };
 
-#define DISPLAY_X				(320)
-#define DISPLAY_Y				(240)
-
 // This describes the structure we use to store font information.
 // The first 5 fields are also the layout of the data in the font header.
 class FontDescriptor
@@ -170,8 +167,8 @@ public:
 
 	void drawCompressedBitmap(int x, int y, int sx, int sy, const uint16_t *data);
 	void drawCompressedBitmapBottomToTop(int x, int y, int sx, int sy, const uint16_t *data);
-	inline uint16_t getDisplayXSize() const { return (orient & DisplayOrientation::SwapXY) ?  320 : 240; }
-	inline uint16_t getDisplayYSize() const { return (orient & DisplayOrientation::SwapXY) ?  240 : 320; }
+	inline uint16_t getDisplayXSize() const { return (orient & DisplayOrientation::SwapXY) ? DISPLAY_X : DISPLAY_Y; }
+	inline uint16_t getDisplayYSize() const { return (orient & DisplayOrientation::SwapXY) ? DISPLAY_Y : DISPLAY_X; }
 	uint16_t getTextX() const { return textXpos; }
 	uint16_t getTextY() const { return textYpos; }
 	uint16_t getFontHeight() const { return cfont.ySize(); }

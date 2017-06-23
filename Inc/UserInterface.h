@@ -8,6 +8,7 @@
 #ifndef SRC_USERINTERFACE_HPP_
 #define SRC_USERINTERFACE_HPP_
 
+#include "mks_conf.h"
 #include "UTFT.h"
 #include "PrinterStatus.h"
 #include "Display.h"
@@ -21,6 +22,50 @@ typedef uint32_t FirmwareFeatures;
 #define noM20M36       0x0010		// firmware does not handle M20 S2 or M36 commands. Use M408 S20 and M408 S36 instead.
 
 const size_t NumColourSchemes = 2;
+
+#if DISPLAY_X == 800
+
+const unsigned int maxHeaters = 7;
+# define MAX_AXES   (6)
+
+const PixelNumber margin = 4;
+const PixelNumber textButtonMargin = 1;
+const PixelNumber iconButtonMargin = 2;
+const PixelNumber outlinePixels = 3;
+const PixelNumber fieldSpacing = 12;
+const PixelNumber statusFieldWidth = 228;
+const PixelNumber bedColumn = 160;
+
+const PixelNumber rowTextHeight = 32;	// height of the font we use
+const PixelNumber rowHeight = 48;
+const PixelNumber moveButtonRowSpacing = 20;
+const PixelNumber extrudeButtonRowSpacing = 20;
+const PixelNumber fileButtonRowSpacing = 12;
+const PixelNumber keyboardButtonRowSpacing = 12;
+
+const PixelNumber speedTextWidth = 105;
+const PixelNumber efactorTextWidth = 45;
+const PixelNumber percentageWidth = 90;
+const PixelNumber e1FactorXpos = 220, e2FactorXpos = 375;
+
+const PixelNumber messageTimeWidth = 90;
+
+const PixelNumber popupY = 345;
+const PixelNumber popupSideMargin = 20;
+const PixelNumber popupTopMargin = 20;
+const PixelNumber keyboardTopMargin = 20;
+const PixelNumber popupFieldSpacing = 20;
+
+const PixelNumber axisLabelWidth = 40;
+const PixelNumber firstMessageRow = margin + rowHeight;		// adjust this to get a whole number of message rows below the keyboard
+
+const PixelNumber progressBarHeight = 16;
+const PixelNumber closeButtonWidth = 66;
+
+const PixelNumber touchCalibMargin = 22;
+
+#else /* DISPLAY_X == 800 */
+
 const unsigned int maxHeaters = 5;
 #define MAX_AXES	(3)
 
@@ -61,7 +106,14 @@ const PixelNumber closeButtonWidth = 40;
 
 const PixelNumber touchCalibMargin = 6;
 
-#define DEFAULT_FONT	glcd17x22
+#endif /* DISPLAY_X == 800 */
+
+#if LARGE_FONT
+# define DEFAULT_FONT	glcd28x32
+#else
+# define DEFAULT_FONT	glcd17x22
+#endif
+
 extern const uint8_t DEFAULT_FONT[]; 				// declare which fonts we will be using
 
 const PixelNumber buttonHeight = rowTextHeight + 4;

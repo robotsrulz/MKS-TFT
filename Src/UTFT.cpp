@@ -251,14 +251,7 @@ void UTFT::LCD_Write_COM_DATA8(uint8_t com1, uint8_t dat1)
 
 void UTFT::InitLCD(DisplayOrientation po)
 {
-	uint16_t R01h, R03h, R60h;
-
 	orient = po;
-	textXpos = 0;
-	textYpos = 0;
-	lastCharColData = 0UL;
-	numContinuationBytesLeft = 0;
-
 	disp_x_size = getDisplayXSize() - 1;
 	disp_y_size = getDisplayYSize() - 1;
 
@@ -268,15 +261,19 @@ void UTFT::InitLCD(DisplayOrientation po)
 	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_nRD_GPIO_Port, LCD_nRD_Pin, GPIO_PIN_SET);
 #elif defined(STM32F103xE) && defined(CZMINI)
+# if defined(ILI9325)
 	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_RESET);
 	osDelay (5);
 	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_SET);
 	osDelay (1);
 
-	*pLcdReg = 0x0000;
-	uint16_t volatile id = *pLcdData;        // Read display id
-
+	// *pLcdReg = 0x0000;
+	// uint16_t volatile id = *pLcdData;        // Read display id
+# endif
 #endif
+
+#if defined(ILI9325) || defined(ILI9328)
+	uint16_t R01h, R03h, R60h;
 
 	switch (orient) {
 	case DisplayOrientation::SwapXY:
@@ -310,18 +307,14 @@ void UTFT::InitLCD(DisplayOrientation po)
 
 	LCD_Write_COM_DATA16(0x0009, 0x0000);
 	LCD_Write_COM_DATA16(0x000a, 0x0000);
-#if defined(STM32F103xE) && defined(CZMINI)
-//    LCD_Write_COM_DATA16(0x000c, 0x0001);         // RGB Display Interface Control 1 (R0Ch) W, RIM[1:0]=01 (16-bit RGB interface (1 transfer/pixel), DB[17:13] and DB[11:1])
-//    LCD_Write_COM_DATA16(0x000d, 0x0000);         // Frame Marker Position (R0Dh) W,
-//    LCD_Write_COM_DATA16(0x000f, 0x0000);         // RGB Display Interface Control 2 (R0Fh)
-#endif
+
 	LCD_Write_COM_DATA16(0x0010, 0x0000);         // Power Control 1 (R10h)
 	LCD_Write_COM_DATA16(0x0011, 0x0007);         // Power Control 2 (R11h)
 	LCD_Write_COM_DATA16(0x0012, 0x0000);         // Power Control 3 (R12h)
 	LCD_Write_COM_DATA16(0x0013, 0x0000);         // Power Control 4 (R13h)
 
 	osDelay(20);
-#if defined(STM32F107xC) && defined(MKS_TFT)
+ #if defined(ILI9328)
 	LCD_Write_COM_DATA16(0x0010, 0x14B0);         // Power Control 1 (R10h)
 	osDelay(5);
 	LCD_Write_COM_DATA16(0x0011, 0x0007);         // Power Control 2 (R11h)
@@ -343,7 +336,7 @@ void UTFT::InitLCD(DisplayOrientation po)
 	LCD_Write_COM_DATA16(0x003c, 0x0203);         // Gamma Control 9
 	LCD_Write_COM_DATA16(0x003d, 0x0403);         // Gamma Control 10
 
-#elif defined(STM32F103xE) && defined(CZMINI)
+ #elif defined(ILI9325)
     LCD_Write_COM_DATA16(0x0010, 0x1590);	      // Power Control 1 (R10h)
     /**
      * AP[2:0]=1 (1.00)
@@ -372,7 +365,7 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_COM_DATA16(0x003c, 0x0701);
     LCD_Write_COM_DATA16(0x003d, 0x000f);
     osDelay(5);  /* delay 50 ms */
-#endif
+ #endif
 
 	LCD_Write_COM_DATA16(0x0050, 0x0000);		  // Window Horizontal RAM Address Start (R50h)
 	LCD_Write_COM_DATA16(0x0051, 239);			  // Window Horizontal RAM Address End (R51h)
@@ -381,7 +374,7 @@ void UTFT::InitLCD(DisplayOrientation po)
 
 	LCD_Write_COM_DATA16(0x0060, R60h);			  // Driver Output Control (R60h)
 	LCD_Write_COM_DATA16(0x0061, 0x0001);		  // Driver Output Control (R61h)
-#if defined(STM32F103xE) && defined(CZMINI)
+ #if defined(ILI9328)
     LCD_Write_COM_DATA16(0x006a, 0x0000);
 
     LCD_Write_COM_DATA16(0x0080, 0x0000);         // Partial Image 1 Display Position (R80h)
@@ -390,18 +383,100 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_COM_DATA16(0x0083, 0x0000);         // Partial Image 2 Display Position (R83h)
     LCD_Write_COM_DATA16(0x0084, 0x0000);         // Partial Image 2 RAM Start/End Address (R84h, R85h)
     LCD_Write_COM_DATA16(0x0085, 0x0000);
-#endif
+ #endif
 	LCD_Write_COM_DATA16(0x0090, 0x0010);		  // Panel Interface Control 1 (R90h)
-#if defined(STM32F103xE) && defined(CZMINI)
+ #if defined(ILI9325)
     /**
       *  RTNI[4:0]=10000b (16 clocks) DIVI[1:0]=0 (fosc/1)
       **/
     LCD_Write_COM_DATA16(0x0092, 0x0000);         // Panel Interface Control 2 (R92h) NOWI[2:0]=0 (o clk)
     LCD_Write_COM_DATA16(0x0095, 0x0110);	      // Panel Interface Control 4 (R95h) (RGB interface mode)
     LCD_Write_COM_DATA16(0x0097, 0x0000);	      // Panel Interface Control 5 (R97h) (RGB interface mode)
-#endif
+ #endif
 	LCD_Write_COM_DATA16(0x0007, 0x0133);		  // Display Control 1 (R07h) W,
 	osDelay(10);
+#endif  /* defined(ILI9325) || defined(ILI9328) */
+
+#if defined(SSD1963_50) || defined(SSD1963_70)
+    LCD_Write_COM(0xE2);		//PLL multiplier, set PLL clock to 120M
+    LCD_Write_DATA8(0x1E);	    //N=0x36 for 6.5M, 0x23 for 10M crystal
+    LCD_Write_DATA8(0x02);
+    LCD_Write_DATA8(0x54);
+
+    LCD_Write_COM(0xE0);		// PLL enable
+    LCD_Write_DATA8(0x01);
+    osDelay(10);
+
+    LCD_Write_COM(0xE0);
+    LCD_Write_DATA8(0x03);
+    osDelay(10);
+
+    LCD_Write_COM(0x01);		// software reset
+    osDelay(100);
+
+    LCD_Write_COM(0xE6);		//PLL setting for PCLK, depends on resolution
+    LCD_Write_DATA8(0x03);
+    LCD_Write_DATA8(0xFF);
+    LCD_Write_DATA8(0xFF);
+
+    LCD_Write_COM(0xB0);		//LCD SPECIFICATION
+    LCD_Write_DATA8((IS24BITLCD) ? 0x24 : 0x04);
+    LCD_Write_DATA8(0x00);
+    LCD_Write_DATA8(0x03);		//Set HDP	799
+    LCD_Write_DATA8(0x1F);
+    LCD_Write_DATA8(0x01);		//Set VDP	479
+    LCD_Write_DATA8(0xDF);
+    LCD_Write_DATA8(0x00);
+
+    LCD_Write_COM(0xB4);		//HSYNC
+    LCD_Write_DATA8(0x03);		//Set HT	928
+    LCD_Write_DATA8(0xA0);
+    LCD_Write_DATA8(0x00);		//Set HPS	46
+    LCD_Write_DATA8(0x2E);
+    LCD_Write_DATA8(0x30);		//Set HPW	48
+    LCD_Write_DATA8(0x00);		//Set LPS	15
+    LCD_Write_DATA8(0x0F);
+    LCD_Write_DATA8(0x00);
+
+    LCD_Write_COM(0xB6);		//VSYNC
+    LCD_Write_DATA8(0x02);		//Set VT	525
+    LCD_Write_DATA8(0x0D);
+    LCD_Write_DATA8(0x00);		//Set VPS	16
+    LCD_Write_DATA8(0x10);
+    LCD_Write_DATA8(0x10);		//Set VPW	16
+    LCD_Write_DATA8(0x00);		//Set FPS	8
+    LCD_Write_DATA8(0x08);
+
+    LCD_Write_COM(0xBA);
+    LCD_Write_DATA8(0x0F);		//GPIO[3:0] out 1
+
+    LCD_Write_COM(0xB8);
+    LCD_Write_DATA8(0x07);	    //GPIO3=input, GPIO[2:0]=output
+    LCD_Write_DATA8(0x01);		//GPIO0 normal
+
+    LCD_Write_COM(0x36);		//rotation
+    LCD_Write_DATA8(0x22);
+
+    LCD_Write_COM(0xF0);		//pixel data interface
+    LCD_Write_DATA8(0x03);
+    osDelay(1);
+
+    setXY(0, 0, 799, 479);
+    LCD_Write_COM(0x29);		//display on
+
+    LCD_Write_COM(0xBE);		//set PWM for B/L
+    LCD_Write_DATA8(0x06);
+    LCD_Write_DATA8(0xf0);
+    LCD_Write_DATA8(0x01);
+    LCD_Write_DATA8(0xf0);
+    LCD_Write_DATA8(0x00);
+    LCD_Write_DATA8(0x00);
+
+    LCD_Write_COM(0xd0);
+    LCD_Write_DATA8(0x0d);
+
+    LCD_Write_COM(0x2C);
+#endif
 
 	setColor(0xFFFF);
 	setBackColor(0);
@@ -429,12 +504,14 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 			y2 = p_x2;
 		}
 
-		/*if (orient & ReverseY)
+#if defined(SSD1963_50) || defined(SSD1963_70)
+		if (orient & ReverseY)
 		{
 			x2 = disp_y_size - p_y1;
 			x1 = disp_y_size - p_y2;
 		}
-		else */
+		else
+#endif
 		{
 			x1 = p_y1;
 			x2 = p_y2;
@@ -464,8 +541,19 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 			x2 = p_x2;
 		}
 	}
+#if defined(SSD1963_50) || defined(SSD1963_70)
+	LCD_Write_COM_DATA16(0x2a, y1>>8);
+	LCD_Write_DATA8(y1);
+	LCD_Write_DATA8(y2>>8);
+	LCD_Write_DATA8(y2);
 
+	LCD_Write_COM_DATA16(0x2b, x1>>8);
+	LCD_Write_DATA8(x1);
+	LCD_Write_DATA8(x2>>8);
+	LCD_Write_DATA8(x2);
 
+	LCD_Write_COM(0x2c);
+#elif defined(ILI9325) || defined(ILI9328)
 	LCD_Write_COM_DATA16(0x50, x1);
 	LCD_Write_COM_DATA16(0x52, y1);
 	LCD_Write_COM_DATA16(0x51, x2);
@@ -474,6 +562,7 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 	LCD_Write_COM_DATA16(0x20, x1);
 	LCD_Write_COM_DATA16(0x21, y1);
 	LCD_Write_COM(0x22);
+#endif
 }
 
 void UTFT::drawRect(int x1, int y1, int x2, int y2)

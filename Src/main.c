@@ -561,7 +561,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void StartServiceTask(void const * argument) {
 
-    BYTE power;
 #if defined(STM32F107xC) && defined(MKS_TFT)
     f_mount(&flashFileSystem, SPIFL_Path, 1);  // mount flash
 
@@ -574,6 +573,7 @@ void StartServiceTask(void const * argument) {
 	while (1) {
 #if defined(STM32F107xC) && defined(MKS_TFT)
    		BuzzerCheckStop();
+        BYTE power;
 
 		if (xSemaphoreTake(xSDSemaphore, 1) == pdTRUE) {
             switch (HAL_GPIO_ReadPin(SDCARD_DETECT_GPIO_Port, SDCARD_DETECT_Pin)) {

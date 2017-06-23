@@ -75,6 +75,17 @@
  extern SPI_HandleTypeDef hspi3;
  #define hspi_touch (hspi3)
 
+extern FATFS flashFileSystem;	// 0:/
+extern FATFS sdFileSystem;		// 1:/
+extern FATFS usbFileSystem;		// 2:/
+
+extern SemaphoreHandle_t xUSBSemaphore;
+extern volatile uint8_t usbEvent;
+
+ #define LARGE_FONT         (0)
+ #define DISPLAY_X			(320)
+ #define DISPLAY_Y			(240)
+
 #elif defined(STM32F103xE) && defined(CZMINI)
  #define TOUCH_DI_Pin            GPIO_PIN_12
  #define TOUCH_DI_GPIO_Port      GPIOB
@@ -86,17 +97,30 @@
  extern SPI_HandleTypeDef hspi2;
  #define hspi_touch (hspi2)
 
+ #if defined(ILI9325)
+  #define LARGE_FONT        (0)
+  #define DISPLAY_X		    (320)
+  #define DISPLAY_Y		    (240)
+
+ #elif defined(SSD1963_50)
+  #define LARGE_FONT        (1)
+  #define DISPLAY_X		    (800)
+  #define DISPLAY_Y		    (480)
+  #define IS24BITLCD        true
+
+ #elif defined(SSD1963_70)
+  #define LARGE_FONT        (1)
+  #define DISPLAY_X		    (800)
+  #define DISPLAY_Y		    (480)
+  #define IS24BITLCD        false
+
+ #endif
+
 #endif
 
 #define VERSION_TEXT		"1.17beta2R"
 
 #define DEFAULTBAUDRATE     57600
-
-#if _USE_LFN != 0
-# define NAMELEN	(_MAX_LFN + 1 + 1)
-#else
-# define NAMELEN	13
-#endif
 
 // #define M105_POLL_INTERVAL  5000    /** poll printer temperature each 5000 ms */
 // #define M114_POLL_INTERVAL  1000    /** poll printer coordinates each 500 ms  */
@@ -113,13 +137,6 @@
 // #define COMM_QUEUE_TIMEOUT  200     /** ALWAYS less than any timer interval !!! */
 
 // extern QueueHandle_t xUIEventQueue;
-
-extern FATFS flashFileSystem;	// 0:/
-extern FATFS sdFileSystem;		// 1:/
-extern FATFS usbFileSystem;		// 2:/
-
-extern SemaphoreHandle_t xUSBSemaphore;
-extern volatile uint8_t usbEvent;
 
 #endif /* __MKS_CONF_H */
 /************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/

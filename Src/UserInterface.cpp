@@ -25,7 +25,11 @@ const unsigned int numLanguages = 2;
 static_assert(ARRAY_SIZE(LanguageTables) == numLanguages, "Wrong number of languages in LanguageTable");
 static const char* array const axisNames[] = { "X", "Y", "Z", "U", "V", "W" };
 
+#if DISPLAY_X == 800
+const Icon heaterIcons[maxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4, IconNozzle5, IconNozzle6 };
+#else
 const Icon heaterIcons[maxHeaters] = { IconBed, IconNozzle1, IconNozzle2, IconNozzle3, IconNozzle4 };
+#endif
 
 // Public fields
 TextField *fwVersionField, *userCommandField;
@@ -254,8 +258,15 @@ void CreateIntegerAdjustPopup(const ColourScheme& colours)
 // Create the movement popup window
 void CreateMovePopup(const ColourScheme& colours)
 {
+#if DISPLAY_X == 800
+	static const char * array const xyJogValues[] = { "-100", "-10", "-1", "-0.1", "0.1",  "1", "10", "100" };
+	static const char * array const zJogValues[] = { "-50", "-5", "-0.5", "-0.05", "0.05",  "0.5", "5", "50" };
+	static const size_t arrSize = 8;
+#else
 	static const char * array const xyJogValues[] = { "-10", "-1", "-0.1", "0.1",  "1", "10" };
 	static const char * array const zJogValues[] = { "-5", "-0.5", "-.05", "0.05",  "0.5", "5" };
+	static const size_t arrSize = 7;
+#endif
 
 	movePopup = CreatePopupWindow(movePopupHeight, movePopupWidth, colours.popupBackColour, colours.popupBorderColour, colours.popupTextColour, colours.buttonImageBackColour, strings->moveHead);
 	PixelNumber ypos = popupTopMargin + buttonHeight + moveButtonRowSpacing;
@@ -265,7 +276,7 @@ void CreateMovePopup(const ColourScheme& colours)
 	{
 		DisplayField::SetDefaultColours(colours.popupButtonTextColour, colours.popupButtonBackColour);
 		const char * array const * array values = (axisNames[i][0] == 'Z') ? zJogValues : xyJogValues;
-		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, 6, values, values, e);
+		CreateStringButtonRow(movePopup, ypos, xpos, movePopupWidth - xpos - popupSideMargin, fieldSpacing, arrSize, values, values, e);
 
 		// We create the label after the button row, so that the buttons follow it in the field order, which makes it easier to hide them
 		DisplayField::SetDefaultColours(colours.popupTextColour, colours.popupBackColour);
@@ -670,8 +681,10 @@ void CreatePrintingTabFields(const ColourScheme& colours)
 	mgr.Show(printProgressBar, false);
 
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-	// mgr.AddField(timeLeftField = new TextField(row9, margin, DISPLAY_X - 2 * margin, TextAlignment::Left, strings->timeRemaining));
-	// mgr.Show(timeLeftField, false);
+#if DISPLAY_X == 800
+	mgr.AddField(timeLeftField = new TextField(row9, margin, DISPLAY_X - 2 * margin, TextAlignment::Left, strings->timeRemaining));
+	mgr.Show(timeLeftField, false);
+#endif
 
 	printRoot = mgr.GetRoot();
 }
@@ -1013,8 +1026,10 @@ namespace UI
 				timesLeftText.catFrom(strings->layer);
 				AppendTimeLeft(timesLeft[2]);
 			}
-			// timeLeftField->SetValue(timesLeftText.c_str());
-			// mgr.Show(timeLeftField, true);
+#if DISPLAY_X == 800
+			timeLeftField->SetValue(timesLeftText.c_str());
+			mgr.Show(timeLeftField, true);
+#endif
 		}
 	}
 
