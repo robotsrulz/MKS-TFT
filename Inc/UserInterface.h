@@ -160,7 +160,11 @@ const PixelNumber extrudePopupHeight = (5 * buttonHeight) + (4 * extrudeButtonRo
 
 const PixelNumber keyboardButtonWidth = DISPLAY_X/5;
 const PixelNumber keyboardPopupWidth = fullPopupWidth;
+#if DISPLAY_X == 800
+const PixelNumber keyButtonWidth = (keyboardPopupWidth - 2 * popupSideMargin)/16;
+#else
 const PixelNumber keyButtonWidth = (keyboardPopupWidth - 2 * popupSideMargin)/12;
+#endif
 const PixelNumber keyButtonHStep = (keyboardPopupWidth - 2 * popupSideMargin - keyButtonWidth)/11;
 const PixelNumber keyButtonVStep = buttonHeight + keyboardButtonRowSpacing;
 const PixelNumber keyboardPopupHeight = (5 * keyButtonVStep) + (2 * keyboardTopMargin) + buttonHeight;
