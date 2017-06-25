@@ -453,7 +453,7 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_DATA8(0x01);		//GPIO0 normal
 
     LCD_Write_COM(0x36);		//rotation
-    LCD_Write_DATA8(0x22);
+    LCD_Write_DATA8(orient & DisplayOrientation::ReverseY ? 0 : 0x03);
 
     LCD_Write_COM(0xF0);		//pixel data interface
     LCD_Write_DATA8(0x03);
@@ -491,55 +491,17 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 
 	if (orient & SwapXY)
 	{
-#if 1
-		if (orient & ReverseX)
-		{
-			y2 = disp_x_size - p_x1;
-			y1 = disp_x_size - p_x2;
-		}
-		else
-#endif
-		{
-			y1 = p_x1;
-			y2 = p_x2;
-		}
-
-#if defined(SSD1963_50) || defined(SSD1963_70)
-		if (orient & ReverseY)
-		{
-			x2 = disp_y_size - p_y1;
-			x1 = disp_y_size - p_y2;
-		}
-		else
-#endif
-		{
-			x1 = p_y1;
-			x2 = p_y2;
-		}
+        y1 = p_x1;
+        y2 = p_x2;
+        x1 = p_y1;
+        x2 = p_y2;
 	}
 	else
 	{
-		if (orient & ReverseY)
-		{
-			y2 = disp_y_size - p_y1;
-			y1 = disp_y_size - p_y2;
-		}
-		else
-		{
-			y1 = p_y1;
-			y2 = p_y2;
-		}
-
-		if (orient & ReverseX)
-		{
-			x2 = disp_x_size - p_x1;
-			x1 = disp_x_size - p_x2;
-		}
-		else
-		{
-			x1 = p_x1;
-			x2 = p_x2;
-		}
+        y1 = p_y1;
+        y2 = p_y2;
+        x1 = p_x1;
+        x2 = p_x2;
 	}
 #if defined(SSD1963_50) || defined(SSD1963_70)
 	LCD_Write_COM_DATA16(0x2a, y1>>8);
@@ -1078,65 +1040,32 @@ size_t UTFT::writeNative(uint32_t c)
 		if (ySize != 0)
 		{
 			bool doSetXY = true;
-			if (orient & InvertText)
-			{
-				uint32_t mask = 1u << (ySize - 1);
-				for (uint8_t i = 0; i < ySize; ++i)
-				{
-					if (colData & mask)
-					{
-						if (doSetXY)
-						{
-							setXY(textXpos, textYpos, textXpos, textYpos + ySize - i - 1);
-							doSetXY = false;
-						}
-						LCD_Write_DATA16(fcolour);
-					}
-					else if (transparentBackground)
-					{
-						doSetXY = true;
-					}
-					else
-					{
-						if (doSetXY)
-						{
-							setXY(textXpos, textYpos, textXpos, textYpos + ySize - i - 1);
-							doSetXY = false;
-						}
-						LCD_Write_DATA16(bcolour);
-					}
-					colData <<= 1;
-				}
-			}
-			else
-			{
-				for (uint8_t i = 0; i < ySize; ++i)
-				{
-					if (colData & 1u)
-					{
-						if (doSetXY)
-						{
-							setXY(textXpos, textYpos + i, textXpos, textYpos + ySize - 1);
-							doSetXY = false;
-						}
-						LCD_Write_DATA16(fcolour);
-					}
-					else if (transparentBackground)
-					{
-						doSetXY = true;
-					}
-					else
-					{
-						if (doSetXY)
-						{
-							setXY(textXpos, textYpos + i, textXpos, textYpos + ySize - 1);
-							doSetXY = false;
-						}
-						LCD_Write_DATA16(bcolour);
-					}
-					colData >>= 1;
-				}
-			}
+            for (uint8_t i = 0; i < ySize; ++i)
+            {
+                if (colData & 1u)
+                {
+                    if (doSetXY)
+                    {
+                        setXY(textXpos, textYpos + i, textXpos, textYpos + ySize - 1);
+                        doSetXY = false;
+                    }
+                    LCD_Write_DATA16(fcolour);
+                }
+                else if (transparentBackground)
+                {
+                    doSetXY = true;
+                }
+                else
+                {
+                    if (doSetXY)
+                    {
+                        setXY(textXpos, textYpos + i, textXpos, textYpos + ySize - 1);
+                        doSetXY = false;
+                    }
+                    LCD_Write_DATA16(bcolour);
+                }
+                colData >>= 1;
+            }
 		}
 		--nCols;
 		++textXpos;
@@ -1174,8 +1103,7 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 			bool xySet = false;
 			for (int tx = 0; tx < sx; tx++)
 			{
-				const int actualX = (orient & InvertBitmap) ? sx - tx - 1 : tx;
-				const uint16_t col = data[(byCols) ? (actualX * sy) + ty : (ty * sx) + actualX];
+				const uint16_t col = data[(byCols) ? (tx * sy) + ty : (ty * sx) + tx];
 				if (transparentBackground && col == 0xFFFF)
 				{
 					xySet = false;
@@ -1184,14 +1112,7 @@ void UTFT::drawBitmap16(int x, int y, int sx, int sy, const uint16_t * data, int
 				{
 					if (!xySet)
 					{
-						if (orient & InvertBitmap)
-						{
-							setXY(x, curY, x + ((sx - tx) * scale) - 1, curY);
-						}
-						else
-						{
-							setXY(x + (tx * scale), curY, x + (sx * scale) - 1, curY);
-						}
+                        setXY(x + (tx * scale), curY, x + (sx * scale) - 1, curY);
 						xySet = true;
 					}
 					LCD_Write_Repeated_DATA16(col, scale);
@@ -1219,8 +1140,7 @@ void UTFT::drawBitmap4(int x, int y, int sx, int sy, const uint8_t * data, Palet
 			bool xySet = false;
 			for (int tx = 0; tx < sx; tx++)
 			{
-				const int actualX = (orient & InvertBitmap) ? sx - tx - 1 : tx;
-				const uint16_t idx = (byCols) ? (actualX * sy) + ty : (ty * sx) + actualX;
+				const uint16_t idx = (byCols) ? (tx * sy) + ty : (ty * sx) + tx;
 				const uint16_t col = (idx & 1) ? palette[data[idx >> 1] & 0x0fu] : palette[data[idx >> 1] >> 4];
 				if (transparentBackground && col == 0xFFFF)
 				{
@@ -1230,14 +1150,7 @@ void UTFT::drawBitmap4(int x, int y, int sx, int sy, const uint8_t * data, Palet
 				{
 					if (!xySet)
 					{
-						if (orient & InvertBitmap)
-						{
-							setXY(x, curY, x + ((sx - tx) * scale) - 1, curY);
-						}
-						else
-						{
-							setXY(x + (tx * scale), curY, x + (sx * scale) - 1, curY);
-						}
+                        setXY(x + (tx * scale), curY, x + (sx * scale) - 1, curY);
 						xySet = true;
 					}
 					LCD_Write_Repeated_DATA16(col, scale);

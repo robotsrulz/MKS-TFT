@@ -58,15 +58,8 @@ enum DisplayOrientation {
 	SwapXY = 0x01,
 	ReverseX = 0x02,
 	ReverseY = 0x04,
-	InvertText = 0x08,
-	InvertBitmap = 0x10,
 
-	Portrait = Default,
-#if defined(ILI9325) || defined(ILI9328)
 	Landscape = SwapXY | ReverseY
-#elif defined(SSD1963_50) || defined(SSD1963_70)
-	Landscape = SwapXY | ReverseX | InvertBitmap
-#endif
 };
 
 // This describes the structure we use to store font information.
