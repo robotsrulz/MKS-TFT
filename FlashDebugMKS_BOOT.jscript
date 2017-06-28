@@ -1,0 +1,4 @@
+h
+loadbin bin\MKS-BOOT\MKS-BOOT.hex, 0
+r
+q

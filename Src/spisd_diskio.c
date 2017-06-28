@@ -30,7 +30,12 @@
 
 #include "ff_gen_drv.h"
 #include "spisd_diskio.h"
-#include "mks_conf.h"
+
+#ifdef BOOTLOADER
+ #include "boot_conf.h"
+#else
+ #include "mks_conf.h"
+#endif
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

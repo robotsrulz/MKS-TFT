@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file   fatfs.h
-  * @brief  Header for fatfs applications
+  * File Name          : boot_conf.h
+  * Description        : This file contains firmware configuration
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2016 STMicroelectronics
+  * COPYRIGHT(c) 2017 Roman Stepanov
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -30,50 +30,47 @@
   *
   ******************************************************************************
   */
-
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __fatfs_H
-#define __fatfs_H
+#ifndef __BOOT_CONF_H
+#define __BOOT_CONF_H
 
-#ifdef __cplusplus
- extern "C" {
-#endif
+#include "stm32f1xx_hal.h"
+#include "fatfs.h"
 
-#include "ff.h"
-#include "ff_gen_drv.h"
 #if defined(STM32F107xC) && defined(MKS_TFT)
- #include "spisd_diskio.h" /* defines SPISD_Driver as external */
- #ifndef BOOTLOADER
-  #include "spiflash_w25q16dv.h"
-  #include "usbh_diskio.h"
+/**
+ * Makerbase MKS-TFT32
+ */
+ #define SPEAKER_Pin             GPIO_PIN_2
+ #define SPEAKER_GPIO_Port       GPIOA
+ #define SDCARD_nCS_Pin          GPIO_PIN_11
+ #define SDCARD_nCS_GPIO_Port    GPIOD
+ #define FLASH_nCS_Pin           GPIO_PIN_9
+ #define FLASH_nCS_GPIO_Port     GPIOB
 
-extern char SPIFL_Path[4];	/* SPI Flash logical drive path */
-extern char USBH_Path[4];	/* USB stick logical drive path */
- #endif /* BOOTLOADER */
-extern char SPISD_Path[4];	/* SPI SD card logical drive path */
-
-extern SPI_HandleTypeDef hspi1;
-
-typedef enum {
-	SPI_SDCARD = 0,
-	SPI_FLASH
-} dselect_t;
-
-void deviceSelect(dselect_t device);
-void deviceDeselect();
+extern FATFS sdFileSystem;		// 0:/
 
 #elif defined(STM32F103xE) && defined(CZMINI)
- #include "sd_diskio.h" /* defines SD_Driver as external */
 
-extern char SD_Path[4]; /* SD logical drive path */
 #endif
 
-void MX_FATFS_Init(void);
-FRESULT transferFile(const TCHAR *source, const TCHAR *dest, uint8_t overwrite);
+typedef enum
+{
+	FLASH_RESULT_OK = 0,
+	FLASH_RESULT_FILE_ERROR,
+	FLASH_RESULT_FLASH_ERROR,
+	FLASH_FILE_NOT_EXISTS,
+	FLASH_FILE_CANNOT_OPEN,
+	FLASH_FILE_INVALID_HASH,
+	FLASH_FILE_TOO_BIG
+} FlashResult;
 
-#ifdef __cplusplus
-}
-#endif
-#endif /*__fatfs_H */
+FlashResult flash(const char *fname);
+extern const uint32_t *mcuFirstPageAddr;
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+typedef void (*Callable)();
+
+#define MAIN_PR_OFFSET 0x8000
+
+#endif /* __BOOT_CONF_H */
+/************************ (C) COPYRIGHT Roman Stepanov *****END OF FILE****/

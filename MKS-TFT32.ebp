@@ -55,7 +55,7 @@
 				<ExtraCommands>
 					<Add after='&quot;C:\Program Files (x86)\SEGGER\JLink_V612f\JLink.exe&quot; -if swd -device STM32F107VC -speed 4000 -CommanderScript $(ProjectDir)FlashDebugMKS.jscript' />
 					<Mode before="0" />
-					<Mode after="0" />
+					<Mode after="2" />
 				</ExtraCommands>
 			</Target>
 			<Target title="F103ZET6_28">
@@ -156,6 +156,103 @@
 					<Mode after="2" />
 				</ExtraCommands>
 			</Target>
+			<Target title="MKS-BOOT">
+				<Option output="bin\MKS-BOOT\MKS-BOOT.elf" />
+				<Option object_output="obj\MKS-BOOT\" />
+				<Option type="0" />
+				<Option create_hex="1" />
+				<Option compiler="armgcc_eb" />
+				<Device>
+					<Add option="$device=cortex-m3" />
+					<Add option="$lscript=./STM32F107VC_FLASH.ld" />
+					<Add option="$stack=0x100" />
+					<Add option="$heap=0x200" />
+				</Device>
+				<Compiler>
+					<Add option="-std=c11" />
+					<Add option="-Wall" />
+					<Add option="-funroll-loops" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+					<Add option="-Os" />
+					<Add option="-g3" />
+					<Add symbol="STM32F107xC" />
+					<Add symbol="MKS_TFT" />
+					<Add symbol="BOOTLOADER" />
+				</Compiler>
+				<Cpp>
+					<Add option="-fno-exceptions" />
+					<Add option="-fno-rtti" />
+					<Add option="-std=c++11" />
+					<Add option="-Wall" />
+					<Add option="-funroll-loops" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+					<Add option="-Os" />
+					<Add option="-g3" />
+				</Cpp>
+				<Assembler>
+					<Add option="-Wa,--gdwarf-2" />
+				</Assembler>
+				<Linker>
+					<Add option="-Wl,--gc-sections" />
+				</Linker>
+				<ExtraCommands>
+					<Add after='&quot;C:\Program Files (x86)\SEGGER\JLink_V612f\JLink.exe&quot; -if swd -device STM32F107VC -speed 4000 -CommanderScript $(ProjectDir)FlashDebugMKS_BOOT.jscript' />
+					<Mode before="0" />
+					<Mode after="2" />
+				</ExtraCommands>
+			</Target>
+			<Target title="MKS-TFT32 4B">
+				<Option output="bin\MKS-TFT32-4B\MKS-TFT32-4B.elf" />
+				<Option object_output="obj\MKS-TFT32-4B\" />
+				<Option type="0" />
+				<Option create_hex="1" />
+				<Option compiler="armgcc_eb" />
+				<Device>
+					<Add option="$device=cortex-m3" />
+					<Add option="$lscript=./STM32F107VC_4BOOT.ld" />
+					<Add option="$stack=0x100" />
+					<Add option="$heap=0x200" />
+				</Device>
+				<Compiler>
+					<Add option="-std=c11" />
+					<Add option="-Wall" />
+					<Add option="-funroll-loops" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+					<Add option="-Os" />
+					<Add option="-g3" />
+					<Add symbol="STM32F107xC" />
+					<Add symbol="MKS_TFT" />
+					<Add symbol="ILI9328" />
+				</Compiler>
+				<Cpp>
+					<Add option="-fno-exceptions" />
+					<Add option="-fno-rtti" />
+					<Add option="-std=c++11" />
+					<Add option="-Wall" />
+					<Add option="-funroll-loops" />
+					<Add option="-fdata-sections" />
+					<Add option="-ffunction-sections" />
+					<Add option="-Os" />
+					<Add option="-g3" />
+				</Cpp>
+				<Assembler>
+					<Add option="-Wa,--gdwarf-2" />
+				</Assembler>
+				<Linker>
+					<Add option="-u _scanf_float" />
+					<Add option="-u _printf_float" />
+					<Add option="-lstdc++" />
+					<Add option="-Wl,--gc-sections" />
+				</Linker>
+				<ExtraCommands>
+					<Add after='&quot;C:\Program Files (x86)\EmBitz\1.11\share\em_armgcc\bin\arm-none-eabi-objcopy.exe&quot; -O binary $(ProjectDir)\bin\MKS-TFT32-4B\MKS-TFT32-4B.elf $(ProjectDir)\bin\MKS-TFT32-4B\firmware.bin' />
+					<Mode before="0" />
+					<Mode after="2" />
+				</ExtraCommands>
+			</Target>
 		</Build>
 		<Device>
 			<Add option="$device=cortex-m3" />
@@ -176,6 +273,21 @@
 			<Add option="-eb_start_files" />
 			<Add option="-eb_lib=n" />
 		</Linker>
+		<Unit filename="Bootloader\boot_conf.h">
+			<Option target="MKS-BOOT" />
+		</Unit>
+		<Unit filename="Bootloader\flash.c">
+			<Option compilerVar="CC" />
+			<Option target="MKS-BOOT" />
+		</Unit>
+		<Unit filename="Bootloader\main.c">
+			<Option compilerVar="CC" />
+			<Option target="MKS-BOOT" />
+		</Unit>
+		<Unit filename="Bootloader\stm32f1xx_it.c">
+			<Option compilerVar="CC" />
+			<Option target="MKS-BOOT" />
+		</Unit>
 		<Unit filename="Drivers\CMSIS\Device\ST\STM32F1xx\Include\stm32f100xb.h" />
 		<Unit filename="Drivers\CMSIS\Device\ST\STM32F1xx\Include\stm32f100xe.h" />
 		<Unit filename="Drivers\CMSIS\Device\ST\STM32F1xx\Include\stm32f101x6.h" />
@@ -200,6 +312,8 @@
 		<Unit filename="Drivers\CMSIS\Device\ST\STM32F1xx\Source\Templates\gcc\startup_stm32f107xc.s">
 			<Option compilerVar="ASM" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-BOOT" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Drivers\CMSIS\Device\ST\STM32F1xx\Source\Templates\system_stm32f1xx.c">
 			<Option compilerVar="CC" />
@@ -257,6 +371,8 @@
 		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_ll_usb.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-BOOT" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal.c">
 			<Option compilerVar="CC" />
@@ -340,11 +456,14 @@
 		</Unit>
 		<Unit filename="FlashDebugMKS.jscript">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-BOOT" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Fonts\glcd17x22.cpp">
 			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32" />
 			<Option target="F103ZET6_28" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Fonts\glcd28x32.cpp">
 			<Option compilerVar="CC" />
@@ -352,16 +471,37 @@
 		</Unit>
 		<Unit filename="Icons\HomeIcons.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Icons\Icons.h" />
+		<Unit filename="Icons\Icons.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Icons\KeyIcons.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Icons\MiscIcons.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Icons\NozzleIcons.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Inc\bsp_driver_sd.h">
 			<Option virtualFolder="Hardware\F103ZE\" />
@@ -371,48 +511,127 @@
 		<Unit filename="Inc\Buzzer.h">
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Inc\Display.h" />
-		<Unit filename="Inc\ecv.h" />
+		<Unit filename="Inc\Display.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\ecv.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Inc\eeprom.h">
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Inc\events.h" />
+		<Unit filename="Inc\events.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Inc\fatfs.h">
 			<Option virtualFolder="Hardware\" />
 		</Unit>
 		<Unit filename="Inc\ffconf.h">
 			<Option virtualFolder="Hardware\" />
 		</Unit>
-		<Unit filename="Inc\FileManager.h" />
+		<Unit filename="Inc\FileManager.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Inc\FreeRTOSConfig.h">
 			<Option virtualFolder="Hardware\" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Inc\Mem.h" />
-		<Unit filename="Inc\MessageLog.h" />
-		<Unit filename="Inc\Misc.h" />
+		<Unit filename="Inc\Mem.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\MessageLog.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\Misc.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Inc\mks_conf.h">
 			<Option virtualFolder="Hardware\" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Inc\PanelDue.h" />
-		<Unit filename="Inc\Print.h" />
-		<Unit filename="Inc\PrinterStatus.h" />
-		<Unit filename="Inc\RequestTimer.h" />
-		<Unit filename="Inc\Reset.h" />
+		<Unit filename="Inc\PanelDue.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\Print.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\PrinterStatus.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\RequestTimer.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\Reset.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Inc\sd_diskio.h">
 			<Option virtualFolder="Hardware\F103ZE\" />
 			<Option target="F103ZET6_28" />
 			<Option target="F103ZET6_50" />
 		</Unit>
-		<Unit filename="Inc\SerialIo.h" />
+		<Unit filename="Inc\SerialIo.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Inc\spiflash_w25q16dv.h">
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-BOOT" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Inc\spisd_diskio.h">
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-BOOT" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Inc\stm32f1xx_hal_conf.h">
 			<Option virtualFolder="Hardware\" />
@@ -420,74 +639,117 @@
 		<Unit filename="Inc\stm32f1xx_it.h">
 			<Option virtualFolder="Hardware\" />
 		</Unit>
-		<Unit filename="Inc\Strings.h" />
+		<Unit filename="Inc\Strings.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Inc\usb_host.h">
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Inc\usbh_conf.h">
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Inc\usbh_diskio.h">
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Inc\UserInterface.h" />
-		<Unit filename="Inc\UTFT.h" />
-		<Unit filename="Inc\UTouch.h" />
-		<Unit filename="Inc\Vector.h" />
+		<Unit filename="Inc\UserInterface.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\UTFT.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\UTouch.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Inc\Vector.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_bot.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Inc\usbh_msc_scsi.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc.c">
 			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_bot.c">
 			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Class\MSC\Src\usbh_msc_scsi.c">
 			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_core.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_ctlreq.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_def.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_ioreq.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Inc\usbh_pipes.h">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_core.c">
 			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ctlreq.c">
 			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_ioreq.c">
 			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\ST\STM32_USB_Host_Library\Core\Src\usbh_pipes.c">
 			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\Third_Party\FatFs\src\diskio.c">
 			<Option compilerVar="CC" />
@@ -511,50 +773,173 @@
 		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.h" />
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\croutine.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\event_groups.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\croutine.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\deprecated_definitions.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOSConfig_template.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\list.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\mpu_prototypes.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\mpu_wrappers.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\portable.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\projdefs.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\queue.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\StackMacros.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\task.h" />
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\timers.h" />
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\croutine.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\deprecated_definitions.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOSConfig_template.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\list.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\mpu_prototypes.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\mpu_wrappers.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\portable.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\projdefs.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\queue.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\StackMacros.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\task.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\include\timers.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\list.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3\port.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
-		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3\portmacro.h" />
+		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM3\portmacro.h">
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\queue.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\tasks.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Middlewares\Third_Party\FreeRTOS\Source\timers.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="MKS_TFT.jflash">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-BOOT" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\bsp_driver_sd.c">
 			<Option compilerVar="CC" />
@@ -566,42 +951,84 @@
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\Display.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\eeprom.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\fatfs.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\FileManager.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\main.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\Mem.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\MessageLog.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\Misc.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\PanelDue.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\Print.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\RequestTimer.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\sd_diskio.c">
 			<Option compilerVar="CC" />
@@ -611,73 +1038,105 @@
 		</Unit>
 		<Unit filename="Src\SerialIo.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\spiflash_w25q16dv.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\spisd_diskio.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-BOOT" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\stm32f1xx_hal_msp.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\stm32f1xx_hal_timebase_TIM.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\stm32f1xx_it.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\usb_host.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\usbh_conf.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\usbh_diskio.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Hardware\MKS-TFT\" />
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\UserInterface.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\UTFT.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\UTouch.cpp">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="STM32F103ZE_FLASH.ld">
 			<Option target="F103ZET6_28" />
 			<Option target="F103ZET6_50" />
 		</Unit>
+		<Unit filename="STM32F107VC_4BOOT.ld">
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
 		<Unit filename="STM32F107VC_FLASH.ld">
 			<Option target="MKS-TFT32" />
+			<Option target="MKS-BOOT" />
 		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger>
-				<target_debugging_settings target="MKS-TFT32" active_interface="J-link">
+				<target_debugging_settings target="F103ZET6_28" active_interface="J-link">
 					<debug_interface interface_id="J-link" ip_address="localhost" ip_port="2331" path="%Software\SEGGER\J-Link:InstallPath%" executable="JLinkGDBServer.exe" description="" dont_start_server="false" backoff_time="2000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
-						<family_options family_id="Generic">
-							<option opt_id="ID_CMD_BEFORE" opt_value="" />
-							<option opt_id="ID_GDB_SERVER_CL" opt_value="" />
-							<option opt_id="ID_CMD_RESET" opt_value="" />
-							<option opt_id="ID_CMD_AFTER" opt_value="" />
-						</family_options>
 						<family_options family_id="STMicroelectronics">
-							<option opt_id="ID_DEVICE" opt_value="STM32F107VC" />
+							<option opt_id="ID_DEVICE" opt_value="STM32F103ZE" />
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
 							<option opt_id="ID_SPEED" opt_value="4000" />
 							<option opt_id="ID_AUTO_SPEED" opt_value="1" />
@@ -752,10 +1211,106 @@
 						</family_options>
 					</debug_interface>
 				</target_debugging_settings>
-				<target_debugging_settings target="F103ZET6_28" active_interface="J-link">
+				<target_debugging_settings target="MKS-TFT32" active_interface="J-link">
 					<debug_interface interface_id="J-link" ip_address="localhost" ip_port="2331" path="%Software\SEGGER\J-Link:InstallPath%" executable="JLinkGDBServer.exe" description="" dont_start_server="false" backoff_time="2000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="Generic">
+							<option opt_id="ID_CMD_BEFORE" opt_value="" />
+							<option opt_id="ID_GDB_SERVER_CL" opt_value="" />
+							<option opt_id="ID_CMD_RESET" opt_value="" />
+							<option opt_id="ID_CMD_AFTER" opt_value="" />
+						</family_options>
 						<family_options family_id="STMicroelectronics">
-							<option opt_id="ID_DEVICE" opt_value="STM32F103ZE" />
+							<option opt_id="ID_DEVICE" opt_value="STM32F107VC" />
+							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
+							<option opt_id="ID_SPEED" opt_value="4000" />
+							<option opt_id="ID_AUTO_SPEED" opt_value="1" />
+							<option opt_id="ID_ENDIANNESS" opt_value="little" />
+							<option opt_id="ID_RESET_TYPE" opt_value="0" />
+							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
+							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
+							<option opt_id="ID_FLASH_DOWNLOAD" opt_value="1" />
+							<option opt_id="ID_FLASH_BREAK" opt_value="1" />
+							<option opt_id="ID_RAM_EXEC" opt_value="0" />
+							<option opt_id="ID_VEC_TABLE" opt_value="1" />
+							<option opt_id="ID_NCACHE_CHECK" opt_value="0" />
+							<option opt_id="ID_NCACHE_BASE" opt_value="" />
+							<option opt_id="ID_NCACHE_LENGTH" opt_value="" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="0" />
+							<option opt_id="ID_ARM_SWI" opt_value="" />
+							<option opt_id="ID_THUMB_SWI" opt_value="" />
+						</family_options>
+					</debug_interface>
+					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="1000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="STMicroelectronics">
+							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
+							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
+							<option opt_id="ID_RESET_TYPE" opt_value="System" />
+							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="0" />
+							<option opt_id="ID_RAM_EXEC" opt_value="0" />
+							<option opt_id="ID_VEC_TABLE" opt_value="1" />
+							<option opt_id="ID_DONT_CONN_RESET" opt_value="0" />
+							<option opt_id="ID_ALL_MODE_DEBUG" opt_value="0" />
+							<option opt_id="ID_DEV_ADDR" opt_value="" />
+							<option opt_id="ID_VERBOSE_LEVEL" opt_value="3" />
+						</family_options>
+					</debug_interface>
+				</target_debugging_settings>
+				<target_debugging_settings target="MKS-BOOT" active_interface="J-link">
+					<debug_interface interface_id="J-link" ip_address="localhost" ip_port="2331" path="%Software\SEGGER\J-Link:InstallPath%" executable="JLinkGDBServer.exe" description="" dont_start_server="false" backoff_time="2000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="Generic">
+							<option opt_id="ID_CMD_BEFORE" opt_value="" />
+							<option opt_id="ID_GDB_SERVER_CL" opt_value="" />
+							<option opt_id="ID_CMD_RESET" opt_value="" />
+							<option opt_id="ID_CMD_AFTER" opt_value="" />
+						</family_options>
+						<family_options family_id="STMicroelectronics">
+							<option opt_id="ID_DEVICE" opt_value="STM32F107VC" />
+							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
+							<option opt_id="ID_SPEED" opt_value="4000" />
+							<option opt_id="ID_AUTO_SPEED" opt_value="1" />
+							<option opt_id="ID_ENDIANNESS" opt_value="little" />
+							<option opt_id="ID_RESET_TYPE" opt_value="0" />
+							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
+							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
+							<option opt_id="ID_FLASH_DOWNLOAD" opt_value="1" />
+							<option opt_id="ID_FLASH_BREAK" opt_value="1" />
+							<option opt_id="ID_RAM_EXEC" opt_value="0" />
+							<option opt_id="ID_VEC_TABLE" opt_value="1" />
+							<option opt_id="ID_NCACHE_CHECK" opt_value="0" />
+							<option opt_id="ID_NCACHE_BASE" opt_value="" />
+							<option opt_id="ID_NCACHE_LENGTH" opt_value="" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="0" />
+							<option opt_id="ID_ARM_SWI" opt_value="" />
+							<option opt_id="ID_THUMB_SWI" opt_value="" />
+						</family_options>
+					</debug_interface>
+					<debug_interface interface_id="ST-link" ip_address="localhost" ip_port="4242" path="${EMBITZ}\share\contrib" executable="STLinkGDB.exe" description="" dont_start_server="false" backoff_time="1000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="STMicroelectronics">
+							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
+							<option opt_id="ID_VECTOR_START" opt_value="0x08000000" />
+							<option opt_id="ID_RESET_TYPE" opt_value="System" />
+							<option opt_id="ID_LOAD_PROGRAM" opt_value="1" />
+							<option opt_id="ID_SEMIHOST_CHECK" opt_value="0" />
+							<option opt_id="ID_RAM_EXEC" opt_value="0" />
+							<option opt_id="ID_VEC_TABLE" opt_value="1" />
+							<option opt_id="ID_DONT_CONN_RESET" opt_value="0" />
+							<option opt_id="ID_ALL_MODE_DEBUG" opt_value="0" />
+							<option opt_id="ID_DEV_ADDR" opt_value="" />
+							<option opt_id="ID_VERBOSE_LEVEL" opt_value="3" />
+						</family_options>
+					</debug_interface>
+				</target_debugging_settings>
+				<target_debugging_settings target="MKS-TFT32 4B" active_interface="J-link">
+					<debug_interface interface_id="J-link" ip_address="localhost" ip_port="2331" path="%Software\SEGGER\J-Link:InstallPath%" executable="JLinkGDBServer.exe" description="" dont_start_server="false" backoff_time="2000" options="0" reg_filter="0" active_family="STMicroelectronics" gdb_before_conn="" gdb_after_conn="">
+						<family_options family_id="Generic">
+							<option opt_id="ID_CMD_BEFORE" opt_value="" />
+							<option opt_id="ID_GDB_SERVER_CL" opt_value="" />
+							<option opt_id="ID_CMD_RESET" opt_value="" />
+							<option opt_id="ID_CMD_AFTER" opt_value="" />
+						</family_options>
+						<family_options family_id="STMicroelectronics">
+							<option opt_id="ID_DEVICE" opt_value="STM32F107VC" />
 							<option opt_id="ID_JTAG_SWD" opt_value="swd" />
 							<option opt_id="ID_SPEED" opt_value="4000" />
 							<option opt_id="ID_AUTO_SPEED" opt_value="1" />

@@ -5,12 +5,14 @@
 #define _FFCONF 68020	/* Revision ID */
 
 /*-----------------------------------------------------------------------------/
-/ Additional user header to be used  
+/ Additional user header to be used
 /-----------------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
 // TODO: write own bsp driver
 // #include "bsp_driver_sd.h"
-#include "cmsis_os.h"
+#ifndef BOOTLOADER
+ #include "cmsis_os.h"
+#endif
 
 /*---------------------------------------------------------------------------/
 / Function Configurations
@@ -105,8 +107,12 @@
 /   950 - Traditional Chinese (DBCS)
 */
 
+#ifndef BOOTLOADER
+ #define	_USE_LFN	3
+#else
+ #define	_USE_LFN	1
+#endif
 
-#define	_USE_LFN	3
 #define	_MAX_LFN	255
 /* The _USE_LFN switches the support of long file name (LFN).
 /
@@ -233,7 +239,7 @@
 /  defined by _NORTC_MON, _NORTC_MDAY and _NORTC_YEAR in local time.
 /  To enable timestamp function (_FS_NORTC = 0), get_fattime() function need to be
 /  added to the project to get current time form real-time clock. _NORTC_MON,
-/  _NORTC_MDAY and _NORTC_YEAR have no effect. 
+/  _NORTC_MDAY and _NORTC_YEAR have no effect.
 /  These options have no effect at read-only configuration (_FS_READONLY = 1). */
 
 
