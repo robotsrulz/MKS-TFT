@@ -94,9 +94,9 @@ int main(void)
 	MX_FATFS_Init();
 	ShortBeep();
 
-//	if (FR_OK == f_mount(&sdFileSystem, SPISD_Path, 1) && FR_OK == flash("0:/firmware.bin"))
-//    {
-//        f_mount(NULL, SPISD_Path, 1);
+	if (FR_OK == f_mount(&sdFileSystem, SPISD_Path, 1) && FR_OK == flash("0:/firmware.bin"))
+    {
+        f_mount(NULL, SPISD_Path, 1);
         ShortBeep();
 
         HAL_SPI_MspDeInit(&hspi1);
@@ -119,13 +119,7 @@ int main(void)
 
         Callable resetHandler = (Callable) (*(mcuFirstPageAddr + 1) );
         resetHandler();
-
-        /*
-        register uint32_t addr = (uint32_t) *(mcuFirstPageAddr + 1);
-        addr ^= 1;
-        Callable mainPResetHandler = (Callable) addr;
-        */
-//	}
+	}
 
 	while (1) {
 		ShortBeep();

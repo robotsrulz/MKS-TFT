@@ -3,7 +3,7 @@
 #include "boot_conf.h"
 
 extern unsigned int _isr_real;
-const uint32_t *mcuFirstPageAddr = (const uint32_t *) 0x8000000 + MAIN_PR_OFFSET;
+const uint32_t *mcuFirstPageAddr = (const uint32_t *) (0x8000000 + MAIN_PR_OFFSET);
 
 // uint32_t mcuLastPageAddr = ((uint32_t) &_isr_real) - FLASH_PAGE_SIZE;
 
