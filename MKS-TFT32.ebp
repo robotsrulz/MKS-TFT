@@ -317,6 +317,10 @@
 		</Unit>
 		<Unit filename="Drivers\CMSIS\Device\ST\STM32F1xx\Source\Templates\system_stm32f1xx.c">
 			<Option compilerVar="CC" />
+			<Option target="MKS-TFT32" />
+			<Option target="F103ZET6_28" />
+			<Option target="F103ZET6_50" />
+			<Option target="MKS-BOOT" />
 		</Unit>
 		<Unit filename="Drivers\CMSIS\Include\arm_common_tables.h" />
 		<Unit filename="Drivers\CMSIS\Include\arm_const_structs.h" />
@@ -1078,6 +1082,10 @@
 			<Option target="MKS-TFT32" />
 			<Option target="F103ZET6_28" />
 			<Option target="F103ZET6_50" />
+			<Option target="MKS-TFT32 4B" />
+		</Unit>
+		<Unit filename="Src\system_stm32f1xx_4boot.c">
+			<Option compilerVar="CC" />
 			<Option target="MKS-TFT32 4B" />
 		</Unit>
 		<Unit filename="Src\usb_host.c">

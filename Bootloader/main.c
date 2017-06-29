@@ -72,7 +72,7 @@ void osDelay(__IO uint32_t Delay)
 
 inline void moveVectorTable(uint32_t Offset)
 {
-    __disable_irq();
+    // __disable_irq();
     SCB->VTOR = FLASH_BASE | Offset;
 }
 
@@ -94,12 +94,10 @@ int main(void)
 	MX_FATFS_Init();
 	ShortBeep();
 
-	if (FR_OK == f_mount(&sdFileSystem, SPISD_Path, 1) && FR_OK == flash("0:/firmware.bin"))
-    {
-        f_mount(NULL, SPISD_Path, 1);
+//	if (FR_OK == f_mount(&sdFileSystem, SPISD_Path, 1) && FR_OK == flash("0:/firmware.bin"))
+//    {
+//        f_mount(NULL, SPISD_Path, 1);
         ShortBeep();
-
-        // HAL_DeInit();
 
         HAL_SPI_MspDeInit(&hspi1);
         HAL_TIM_Base_MspDeInit(&htim2);
@@ -110,22 +108,24 @@ int main(void)
         __HAL_RCC_GPIOA_CLK_DISABLE();
         __HAL_RCC_GPIOA_CLK_DISABLE();
 
+        HAL_DeInit();
+
         // Disabling SysTick interrupt
-//        SysTick->CTRL = 0;
+        SysTick->CTRL = 0;
         moveVectorTable(MAIN_PR_OFFSET);
         // Setting initial value to stack pointer
         __set_MSP(*mcuFirstPageAddr);
         // booting really
 
-        Callable mainPResetHandler = (Callable) (*(mcuFirstPageAddr + 1) );
-        mainPResetHandler();
+        Callable resetHandler = (Callable) (*(mcuFirstPageAddr + 1) );
+        resetHandler();
 
         /*
         register uint32_t addr = (uint32_t) *(mcuFirstPageAddr + 1);
         addr ^= 1;
         Callable mainPResetHandler = (Callable) addr;
         */
-	}
+//	}
 
 	while (1) {
 		ShortBeep();
