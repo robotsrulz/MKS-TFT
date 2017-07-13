@@ -103,10 +103,10 @@ int main(void)
         HAL_TIM_Base_MspDeInit(&htim2);
 
         __HAL_RCC_GPIOA_CLK_DISABLE();
-        __HAL_RCC_GPIOA_CLK_DISABLE();
-        __HAL_RCC_GPIOA_CLK_DISABLE();
-        __HAL_RCC_GPIOA_CLK_DISABLE();
-        __HAL_RCC_GPIOA_CLK_DISABLE();
+        __HAL_RCC_GPIOB_CLK_DISABLE();
+        __HAL_RCC_GPIOC_CLK_DISABLE();
+        __HAL_RCC_GPIOD_CLK_DISABLE();
+        __HAL_RCC_GPIOE_CLK_DISABLE();
 
         HAL_DeInit();
 
