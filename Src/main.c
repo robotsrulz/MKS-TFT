@@ -72,6 +72,12 @@ static void MX_SDIO_SD_Init(void);
 static void MX_FSMC_Init(void);
 static void MX_SPI2_Init(void);
 
+#ifdef ADNS
+SPI_HandleTypeDef hspi1;
+
+static void MX_SPI1_Init(void);
+#endif
+
 #endif
 
 FATFS sdFileSystem;		// 1:/
@@ -134,6 +140,11 @@ int main(void)
 	MX_SDIO_SD_Init();
 	MX_FSMC_Init();
 	MX_SPI2_Init();
+
+#ifdef ADNS
+    MX_SPI1_Init();
+#endif
+
 #endif
 
 	MX_FATFS_Init();
@@ -143,30 +154,11 @@ int main(void)
 	xSDSemaphore    = xSemaphoreCreateBinary();
 	xUSBSemaphore   = xSemaphoreCreateBinary();
 
-//	xComm1Semaphore = xSemaphoreCreateBinary();
-//	xComm2Semaphore = xSemaphoreCreateBinary();
-
-//	osThreadDef(comm1Task, StartComm1Task, osPriorityNormal, 0,	512);
-//	comm1TaskHandle = osThreadCreate(osThread(comm1Task), NULL);
-
-//	osThreadDef(comm2Task, StartComm2Task, osPriorityNormal, 0,	128);
-//	comm2TaskHandle = osThreadCreate(osThread(comm2Task), NULL);
-
 	osThreadDef(serviceHandlerTask, StartServiceTask, osPriorityNormal, 0, 128);
 	serviceTaskHandle = osThreadCreate(osThread(serviceHandlerTask), NULL);
 
 	osThreadDef(uiTask, StartUITask, osPriorityNormal, 0, 12 * 1024 / 4);
 	uiTaskHandle = osThreadCreate(osThread(uiTask), NULL);
-
-//	xUIEventQueue = xQueueCreate(UI_QUEUE_SIZE, sizeof(xUIEvent_t));
-//	if (xUIEventQueue == NULL) {
-//		/* Queue was not created and must not be used. */
-//	}
-//
-//	xPCommEventQueue = xQueueCreate(COMM_QUEUE_SIZE, sizeof(xCommEvent_t));
-//	if (xPCommEventQueue == NULL) {
-//		/* Queue was not created and must not be used. */
-//	}
 
 	osKernelStart();
 	while (1) {}
@@ -343,6 +335,26 @@ static void MX_SDIO_SD_Init(void)
     hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
     hsd.Init.ClockDiv = 2;
 }
+
+#ifdef ADNS
+static void MX_SPI1_Init(void)
+{
+    hspi1.Instance = SPI1;
+    hspi1.Init.Mode = SPI_MODE_MASTER;
+    hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+    hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+    hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+    hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+    hspi1.Init.NSS = SPI_NSS_SOFT;
+    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256; // was: 32
+    hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+    hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    hspi1.Init.CRCPolynomial = 10;
+    if (HAL_SPI_Init(&hspi1) != HAL_OK)
+        Error_Handler();
+}
+#endif
 
 static void MX_SPI2_Init(void)
 {
@@ -525,6 +537,13 @@ static void MX_GPIO_Init(void)
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(TOUCH_nCS_GPIO_Port, &GPIO_InitStruct);
+
+#ifdef ADNS
+#endif
+	GPIO_InitStruct.Pin = GPIO_PIN_7;   // ADNS nCS
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 #endif
 }
 
@@ -610,63 +629,14 @@ void StartServiceTask(void const * argument) {
 	}
 }
 
-/*
-
-void StartComm1Task(void const * argument) {
-
-    __HAL_UART_FLUSH_DRREGISTER(&huart2);
-    HAL_UART_Receive_DMA(&huart2, &comm1RxBuffer, 1);
-
-	while (1) {
-
-   		if (xPCommEventQueue != 0) {
-
-//			xCommEvent_t event;
-//			BaseType_t hasEvent = xQueueReceive(xPCommEventQueue, &event, (TickType_t ) 0);
-
-            osDelay(1);
- 	    }
-	}
-}
-
-void StartComm2Task(void const * argument) {
-
-	while (1) {
-		osDelay(1);
-	}
-}
-
-*/
-
-/* USER CODE END 4 */
-
 /* StartUITask function */
 void StartUITask(void const * argument) {
 
-//	xUIEvent_t event;
-//	event.ucEventID = INIT_EVENT;
-// 	(*processEvent) (&event);
-
-
-	/* Infinite loop */
-
+    /* Infinite loop */
 	PanelDueMain();
 
 	for (;;) {
-//		if (xUIEventQueue != 0) {
-
-//			xUIEvent_t event;
-//			if (xQueueReceive(xUIEventQueue, &event, (TickType_t ) 500)) {
-
-//				(*processEvent) (&event);
-//			} else {
-				/*
-				 * No events received
-				 * */
-//			}
-		}
-//	}
-	/* USER CODE END 5 */
+	}
 }
 
 /**

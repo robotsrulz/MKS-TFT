@@ -1081,6 +1081,10 @@ void SendRequest(const char *s, bool includeSeq = false)
  *
  * \return Unused (ANSI-C compatibility).
  */
+ #ifdef ADNS
+    void runAdns();
+ #endif
+
 extern "C" int PanelDueMain(void)
 {
 	lastTouchTime = osKernelSysTick();
@@ -1103,6 +1107,12 @@ extern "C" int PanelDueMain(void)
 		InitLcd(nvData.lcdOrientation, nvData.language, nvData.colourScheme);
 		CalibrateTouch();							// this includes the touch driver initialisation
 		SaveSettings();
+
+#ifdef ADNS
+
+        runAdns();
+
+#endif
 	}
 
 	// Set up the baud rate
