@@ -37,6 +37,8 @@
 
 #include "mks_conf.h"
 
+void Error_Handler(void);
+
 #if defined(STM32F107xC) && defined(MKS_TFT)
 # include "usb_host.h"
 # include "Buzzer.h"
@@ -74,8 +76,45 @@ static void MX_SPI2_Init(void);
 
 #ifdef ADNS
 SPI_HandleTypeDef hspi1;
+TIM_HandleTypeDef htim6;
 
 static void MX_SPI1_Init(void);
+
+/* TIM6 init function */
+static void MX_TIM6_Init(void)
+{
+
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 72;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 100; /* generate IRQ 72 MHz / 72 / 100 = 10,000 times per second */
+  htim6.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+volatile uint32_t u100ticks = 0;
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM7 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim->Instance == TIM6) {
+		u100ticks++;
+	}
+	else if (htim->Instance == TIM7) {
+        HAL_IncTick();
+	}
+}
 #endif
 
 #endif
@@ -88,15 +127,7 @@ DMA_HandleTypeDef hdma_usart2_rx;
 static osThreadId uiTaskHandle;      // UI thread
 static osThreadId serviceTaskHandle; // low latency tasks
 
-// static osThreadId comm1TaskHandle;		// printing thread
-// static osThreadId comm2TaskHandle;		// wi-fi/bt thread
-// static osThreadId sdcardHandlerHandle;	// sd card insert/remove
-
-// QueueHandle_t xUIEventQueue;
-// QueueHandle_t xPCommEventQueue;
-
 void SystemClock_Config(void);
-void Error_Handler(void);
 
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
@@ -104,17 +135,11 @@ static void MX_DMA_Init(void);
 void StartUITask(void const * argument);
 void StartServiceTask(void const * argument);
 
-// void StartComm1Task(void const * argument);
-// void StartComm2Task(void const * argument);
-
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 SemaphoreHandle_t xSDSemaphore;
 SemaphoreHandle_t xUSBSemaphore;
 volatile uint8_t usbEvent;
-
-// static SemaphoreHandle_t xComm1Semaphore;
-// static SemaphoreHandle_t xComm2Semaphore;
 
 int PanelDueMain(void);
 
@@ -143,6 +168,7 @@ int main(void)
 
 #ifdef ADNS
     MX_SPI1_Init();
+    MX_TIM6_Init();
 #endif
 
 #endif

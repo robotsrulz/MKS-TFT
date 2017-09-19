@@ -321,6 +321,16 @@ uint8_t adnsFirmwareData[] = { 0x03, 0xa4, 0x6e, 0x16, 0x6d, 0x89, 0x3e,
 		0xdb, 0x35, 0xf3
 };
 
+extern volatile uint32_t u100ticks;
+extern TIM_HandleTypeDef htim6;
+
+inline void sleep100us() {
+
+    HAL_TIM_Base_Start_IT(&htim6);
+    while (!u100ticks) /* do nothing for 100 us */;
+    HAL_TIM_Base_Stop_IT(&htim6);
+    u100ticks = 0;
+}
 
 inline void adnsComBegin() {
 	GPIOB->BSRR = (uint32_t)GPIO_PIN_7 << 16;
@@ -336,14 +346,14 @@ uint8_t adnsReadRegister(uint8_t address, bool last = true) {
 	// send address of the register, with MSBit = 0 to indicate it's a read
 	uint8_t TxData = address & (uint8_t) 0x7f, RxData = 0;
 	HAL_SPI_Transmit(&hspi1, &TxData, 1, 1000);
-	osDelay(1); // tSRAD
+	sleep100us(); // tSRAD
 	// read data
 	HAL_SPI_Receive(&hspi1, &RxData, 1, 1000);
 
 	if (last) {
-		osDelay(1); // tSCLK-NCS for read operation is 120ns
+		sleep100us(); // tSCLK-NCS for read operation is 120ns
 		adnsComEnd();
-		osDelay(1); //  tSRW/tSRR (=20us) minus tSCLK-NCS
+		sleep100us(); //  tSRW/tSRR (=20us) minus tSCLK-NCS
 	}
 
 	return RxData;
@@ -357,9 +367,9 @@ void adnsWriteRegister(uint8_t address, uint8_t data, bool last = true) {
 	HAL_SPI_Transmit(&hspi1, TxData, 2, 1000);
 
 	if (last) {
-		osDelay(1); // tSCLK-NCS for read operation is 120ns
+		sleep100us(); // tSCLK-NCS for read operation is 120ns
 		adnsComEnd();
-		osDelay(1); //  tSRW/tSRR (=20us) minus tSCLK-NCS
+		sleep100us(); //  tSRW/tSRR (=20us) minus tSCLK-NCS
 	}
 }
 
@@ -381,7 +391,7 @@ void adnsSromDownload() {
 	//	3. Wait for one frame
 
 	// wait for more than one frame period
-	osDelay(10); // assume that the frame rate is as low as 100fps... even if it should never be that low
+	sleep100us(); // assume that the frame rate is as low as 100fps... even if it should never be that low
 
 	//	4. Write 0x18 to SROM_Enable register again to start SROM downloading
 
@@ -394,12 +404,12 @@ void adnsSromDownload() {
 	// write the SROM file (=firmware data)
 	uint8_t TxData = REG_SROM_Load_Burst | 0x80;
 	HAL_SPI_Transmit(&hspi1, &TxData, 1, 1000);; // write burst destination adress
-	osDelay(1);
+	sleep100us();
 
 	// send all uint8_ts of the firmware
 	for (unsigned short i = 0; i < adnsFirmwareLength; i++) {
 		HAL_SPI_Transmit(&hspi1, &adnsFirmwareData[i], 1, 1000);
-		osDelay(1);
+		sleep100us();
 	}
 
 	lcd.print("done!");
@@ -443,7 +453,7 @@ void adnsPowerUp() {
 	// upload the firmware
 	adnsSromDownload();
 
-	osDelay(10);
+	sleep100us();
 
 	//	7. Enable laser by setting Forced_Disable bit (Bit-0) of LASER_CTRL0 register (address 0x20) to 0.
 
@@ -454,7 +464,7 @@ void adnsPowerUp() {
 	uint8_t laser_ctrl0 = adnsReadRegister(REG_LASER_CTRL0);
 	adnsWriteRegister(REG_LASER_CTRL0, laser_ctrl0 & 0xf0);
 
-	osDelay(1);
+	sleep100us();
 
 //	lcd.print("; Optical Chip Initialized.");
 
@@ -464,15 +474,14 @@ void adnsPowerUp() {
 void adnsFrameCapture() {
 	//	1. Reset the chip by writing 0x5a to Power_Up_Reset register (address 0x3a).
 
-	lcd.print("; Step 1.");
+//	lcd.print("; Step 1.");
 
 	adnsWriteRegister(REG_Power_Up_Reset, 0x5a); // force reset
-
 	osDelay(50); // wait for it to reboot
 
 	//	2. Enable laser by setting Forced_Disable bit (Bit-0) of LASER_CTRL) register to 0.
 
-	lcd.print("; Step 2.");
+//	lcd.print("; Step 2.");
 
 	//enable laser(bit 0 = 0b), in normal mode (bits 3,2,1 = 000b)
 	// reading the actual value of the register is important because the real
@@ -480,8 +489,7 @@ void adnsFrameCapture() {
 	// change the reserved uint8_ts (like by writing 0x00...) it would not work.
 	uint8_t laser_ctrl0 = adnsReadRegister(REG_LASER_CTRL0);
 	adnsWriteRegister(REG_LASER_CTRL0, laser_ctrl0 & 0xf0);
-
-	osDelay(1);
+//	adnsWriteRegister(REG_LASER_CTRL0, laser_ctrl0 & 0xf4);
 }
 
 int adnsGetFrameSize() {
@@ -491,26 +499,28 @@ int adnsGetFrameSize() {
 uint8_t* adnsGetFrame() {
 	//	3. Write 0x93 to Frame_Capture register (address 0x12).
 
-	lcd.print("; Step 3.");
+    sleep100us();
+//	lcd.print("; Step 3.");
 
 	adnsWriteRegister(REG_Frame_Capture, 0x93);
+	sleep100us();
 
 	//	4. Write 0xc5 to Frame_Capture register.
 
-	lcd.print("; Step 4.");
+//	lcd.print("; Step 4.");
 
 	adnsWriteRegister(REG_Frame_Capture, 0xc5);
 
 	//	5. Wait for two frames.
 
-	lcd.print("; Step 5.");
+//	lcd.print("; Step 5.");
 
 	// wait for more than one frame period
-	osDelay(10); // assume that the frame rate is as low as 100fps... even if it should never be that low
+	osDelay(20); // assume that the frame rate is as low as 100fps... even if it should never be that low
 
 	//	6. Check for fist pixel by reading bit zero of Motion register. If = 1, fist pixel is available.
 
-	lcd.print("; Step 6.");
+//	lcd.print("; Step 6.");
 
 	uint8_t firstuint8_t;
 
@@ -518,22 +528,37 @@ uint8_t* adnsGetFrame() {
 		firstuint8_t = adnsReadRegister(REG_Motion, false);
 	} while ((firstuint8_t & 1) == 0);
 
-	osDelay(100);
+	sleep100us();
+
+	uint8_t min_c = adnsReadRegister(REG_Minimum_Pixel, false);
+	uint8_t max_c = adnsReadRegister(REG_Maximum_Pixel, false);
+	uint8_t range = max_c - min_c;
 
 	//	7. Continue read from Pixel_Burst register until all 900 pixels are transferred.
 
 	uint8_t TxData = REG_Pixel_Burst;
 	HAL_SPI_Transmit(&hspi1, &TxData, 1, 1000);
-	osDelay(1); // tSRAD
+	sleep100us(); // tSRAD
 
 	for (int i = 0; i < ADNS_FRAME_SIZE; i++) {
 		HAL_SPI_Receive(&hspi1, &adnsframeData[i], 1, 1000);
-		osDelay(1);
+//		sleep100us();
+        uint16_t x = ((899 - i) % 30) * 10;
+        uint16_t y = ((899 - i) / 30) * 8;
+
+//        uint16_t c1 = adnsframeData[i];
+        uint16_t c = UTFT::fromRGB(adnsframeData[i] * 2, adnsframeData[i] * 2, adnsframeData[i] * 2);
+
+        // lcd.fillRect(x, y, x + 9, y + 7, c);
+        lcd.setColor(c);
+        for (int z=0; z<8; z++)
+            lcd.drawLine(x, y + z, x + 9, y + z);
 	}
 
 	adnsComEnd(); // ensure that the serial port is reset
 
 	//	8. Continue step 3-7 to capture another frame.
+//	lcd.print("frame capture done");
 
 	return adnsframeData;
 }
@@ -609,9 +634,16 @@ void runAdns() {
 
     // lcd.print("ADNS-9800 test");
 
-    adnsPowerUp();
+//    adnsPowerUp();
+    //osDelay(1000);
+    adnsFrameCapture();
 
     while(1) {
+        // lcd.fillScr(lightGrey);
+        // lcd.setTextPos(0, 0);
 
+        adnsGetFrame();
+
+        // osDelay(1000);
     }
 }
