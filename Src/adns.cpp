@@ -496,6 +496,51 @@ int adnsGetFrameSize() {
 	return ADNS_FRAME_SIZE;
 }
 
+
+#define L_THRESHOLD 80
+#define C_THRESHOLD 6
+
+void drawCenter() {
+
+    int x1 = -1, x2 = -1, y1 = -1, y2 =-1;
+    int count_x, count_y;
+
+    for (size_t y=0; y<30; y++) {
+
+        count_x = 0;
+        count_y = 0;
+
+        for (size_t x=0; x<30; x++) {
+
+            if (adnsframeData[y * 30 + x] >= L_THRESHOLD) count_x++;
+            if (adnsframeData[x * 30 + y] >= L_THRESHOLD) count_y++;
+        }
+
+        if (y1 == -1) {
+            if (count_x >= C_THRESHOLD) y1 = y;
+        }
+        else if (y2 == -1) {
+            if (count_x < C_THRESHOLD)  y2 = y;
+        }
+
+        if (x1 == -1) {
+            if (count_y >= C_THRESHOLD) x1 = y;
+        }
+        else if (x2 == -1) {
+            if (count_y < C_THRESHOLD)  x2 = y;
+        }
+    }
+
+    if (x1 != -1 && x2 != -1 && y1 != -1 && y2 != -1) {
+
+        int x = (x1 + x2) / 2 * 10;
+        int y = (y1 + y2) / 2 * 8;
+
+        lcd.drawLine(x - 20, y, x + 20, y);
+        lcd.drawLine(x, y - 16, x, y + 16);
+    }
+}
+
 uint8_t* adnsGetFrame() {
 	//	3. Write 0x93 to Frame_Capture register (address 0x12).
 
@@ -530,9 +575,9 @@ uint8_t* adnsGetFrame() {
 
 	sleep100us();
 
-	uint8_t min_c = adnsReadRegister(REG_Minimum_Pixel, false);
-	uint8_t max_c = adnsReadRegister(REG_Maximum_Pixel, false);
-	uint8_t range = max_c - min_c;
+//	uint8_t min_c = adnsReadRegister(REG_Minimum_Pixel, false);
+//	uint8_t max_c = adnsReadRegister(REG_Maximum_Pixel, false);
+//	uint8_t range = max_c - min_c;
 
 	//	7. Continue read from Pixel_Burst register until all 900 pixels are transferred.
 
@@ -557,6 +602,7 @@ uint8_t* adnsGetFrame() {
 
 	adnsComEnd(); // ensure that the serial port is reset
 
+    drawCenter();
 	//	8. Continue step 3-7 to capture another frame.
 //	lcd.print("frame capture done");
 
