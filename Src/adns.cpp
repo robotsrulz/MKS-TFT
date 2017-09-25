@@ -496,38 +496,49 @@ int adnsGetFrameSize() {
 	return ADNS_FRAME_SIZE;
 }
 
+uint8_t mid = 0;
 
-#define L_THRESHOLD 80
-#define C_THRESHOLD 6
+#define L_THRESHOLD (mid < 32 ? 127 : mid - 15)
+// #define L_THRESHOLD 80
+#define C_THRESHOLD 10
 
 void drawCenter() {
 
     int x1 = -1, x2 = -1, y1 = -1, y2 =-1;
     int count_x, count_y;
 
+    lcd.setColor(lightRed);
+
     for (size_t y=0; y<30; y++) {
 
         count_x = 0;
-        count_y = 0;
-
         for (size_t x=0; x<30; x++) {
-
-            if (adnsframeData[y * 30 + x] >= L_THRESHOLD) count_x++;
-            if (adnsframeData[x * 30 + y] >= L_THRESHOLD) count_y++;
+            if (adnsframeData[y * 30 + x] >= L_THRESHOLD) { count_x++; lcd.drawLine(x * 10, y * 8, (x * 10) + 9, (y * 8) + 7); }
         }
 
         if (y1 == -1) {
-            if (count_x >= C_THRESHOLD) y1 = y;
+            if (count_x >= C_THRESHOLD) { y1 = y; }
         }
-        else if (y2 == -1) {
-            if (count_x < C_THRESHOLD)  y2 = y;
+        else /* if (y2 == -1) */ {
+            if (count_x >= C_THRESHOLD) { y2 = y; }
+        }
+    }
+
+    lcd.setColor(lightBlue);
+
+    for (size_t x=0; x<30; x++) {
+
+        count_y = 0;
+
+        for (size_t y=0; y<30; y++) {
+            if (adnsframeData[y * 30 + x] >= L_THRESHOLD) { count_y++;  lcd.drawLine((x * 10) + 9, y * 8, x * 10, (y * 8) + 7); }
         }
 
         if (x1 == -1) {
-            if (count_y >= C_THRESHOLD) x1 = y;
+            if (count_y >= C_THRESHOLD) { x1 = x; }
         }
-        else if (x2 == -1) {
-            if (count_y < C_THRESHOLD)  x2 = y;
+        else /* if (x2 == -1) */ {
+            if (count_y >= C_THRESHOLD) { x2 = x; }
         }
     }
 
@@ -536,8 +547,18 @@ void drawCenter() {
         int x = (x1 + x2) / 2 * 10;
         int y = (y1 + y2) / 2 * 8;
 
+
+        lcd.setColor(lightGreen);
+
+        lcd.drawLine(x1 * 10, y1 * 8, x1 * 10, y2 * 8);
+        lcd.drawLine(x1 * 10, y2 * 8, x2 * 10, y2 * 8);
+        lcd.drawLine(x2 * 10, y2 * 8, x2 * 10, y1 * 8);
+        lcd.drawLine(x2 * 10, y1 * 8, x1 * 10, y1 * 8);
+
         lcd.drawLine(x - 20, y, x + 20, y);
         lcd.drawLine(x, y - 16, x, y + 16);
+
+        sleep100us();
     }
 }
 
@@ -575,9 +596,10 @@ uint8_t* adnsGetFrame() {
 
 	sleep100us();
 
-//	uint8_t min_c = adnsReadRegister(REG_Minimum_Pixel, false);
-//	uint8_t max_c = adnsReadRegister(REG_Maximum_Pixel, false);
-//	uint8_t range = max_c - min_c;
+	uint8_t min_c = adnsReadRegister(REG_Minimum_Pixel, false);
+	uint8_t max_c = adnsReadRegister(REG_Maximum_Pixel, false);
+
+	mid = ( max_c + min_c ) / 2;
 
 	//	7. Continue read from Pixel_Burst register until all 900 pixels are transferred.
 
@@ -588,8 +610,8 @@ uint8_t* adnsGetFrame() {
 	for (int i = 0; i < ADNS_FRAME_SIZE; i++) {
 		HAL_SPI_Receive(&hspi1, &adnsframeData[i], 1, 1000);
 //		sleep100us();
-        uint16_t x = ((899 - i) % 30) * 10;
-        uint16_t y = ((899 - i) / 30) * 8;
+        uint16_t x = (i % 30) * 10;
+        uint16_t y = (i / 30) * 8;
 
 //        uint16_t c1 = adnsframeData[i];
         uint16_t c = UTFT::fromRGB(adnsframeData[i] * 2, adnsframeData[i] * 2, adnsframeData[i] * 2);
